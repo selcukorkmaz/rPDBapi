@@ -20,6 +20,13 @@ search <- function(scan_params, url, return_type, num_attempts = 1, sleep_time =
 
   query_text <- toJSON(scan_params, auto_unbox = TRUE, pretty = TRUE)
 
+  if("url" %in% names(scan_params)){
+
+    url = scan_params$url
+
+
+  }
+
   for (attempt in 1:num_attempts) {
     response <- POST(url, body = query_text, encode = "json")
     if (http_status(response)$category != "success") {
