@@ -14,18 +14,10 @@ SequenceOperator <- function(sequence, sequence_type = NULL, evalue_cutoff = 100
   }
 
   list(
-    sequence = sequence,
-    sequence_type = sequence_type,
     evalue_cutoff = evalue_cutoff,
     identity_cutoff = identity_cutoff,
-    to_dict = function() {
-      list(
-        evalue_cutoff = evalue_cutoff,
-        identity_cutoff = identity_cutoff,
-        target = SequenceType[[sequence_type]],
-        value = sequence
-      )
-    }
+    target = SequenceType[[sequence_type]],
+    value = sequence
   )
 }
 

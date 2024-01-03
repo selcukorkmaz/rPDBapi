@@ -11,11 +11,8 @@ ComparisonType <- c(
 # Default Operator Class
 DefaultOperator <- function(value) {
   list(
-    value = value,
-    to_dict = function() {
-      list("value" = value)
-    }
-  )
+    value = value
+    )
 }
 
 # Exact Match Operator Class
@@ -23,13 +20,7 @@ ExactMatchOperator <- function(attribute, value) {
   list(
     attribute = attribute,
     value = value,
-    to_dict = function() {
-      list(
-        attribute = attribute,
-        operator = "exact_match",
-        value = value
-      )
-    }
+    operator = "exact_match"
   )
 }
 
@@ -37,14 +28,8 @@ ExactMatchOperator <- function(attribute, value) {
 InOperator <- function(attribute, values) {
   list(
     attribute = attribute,
-    values = values,
-    to_dict = function() {
-      list(
-        attribute = attribute,
-        operator = "in",
-        value = values
-      )
-    }
+    operator = "in",
+    values = values
   )
 }
 
@@ -52,14 +37,8 @@ InOperator <- function(attribute, values) {
 ContainsWordsOperator <- function(attribute, value) {
   list(
     attribute = attribute,
-    value = value,
-    to_dict = function() {
-      list(
-        attribute = attribute,
-        operator = "contains_words",
-        value = value
-      )
-    }
+    operator = "contains_words",
+    value = value
   )
 }
 
@@ -67,24 +46,18 @@ ContainsWordsOperator <- function(attribute, value) {
 ContainsPhraseOperator <- function(attribute, value) {
   list(
     attribute = attribute,
-    value = value,
-    to_dict = function() {
-      list(
-        attribute = attribute,
-        operator = "contains_phrase",
-        value = value
-      )
-    }
+    operator = "contains_phrase",
+    value = value
   )
 }
 
 # Comparison Operator Class
 ComparisonOperator <- function(attribute, value, comparison_type) {
-  list(
-    attribute = attribute,
-    value = value,
-    comparison_type = comparison_type,
-    to_dict = function() {
+  # list(
+  #   attribute = attribute,
+  #   value = value,
+  #   comparison_type = comparison_type,
+
       if (ComparisonType[[comparison_type]] == "not_equal") {
         param_dict <- list(operator = "equals", negation = TRUE)
       } else {
@@ -95,27 +68,21 @@ ComparisonOperator <- function(attribute, value, comparison_type) {
       param_dict$value <- value
 
       param_dict
-    }
-  )
+
+
 }
 
 # Range Operator Class
 RangeOperator <- function(attribute, from_value, to_value, include_lower = TRUE, include_upper = TRUE, negation = FALSE) {
   list(
+    operator = "range",
     attribute = attribute,
     from_value = from_value,
     to_value = to_value,
     include_lower = include_lower,
     include_upper = include_upper,
     negation = negation,
-    to_dict = function() {
-      list(
-        operator = "range",
-        attribute = attribute,
-        negation = negation,
-        value = list(from = from_value, to = to_value)
-      )
-    }
+    value = list(from = from_value, to = to_value)
   )
 }
 
@@ -123,14 +90,13 @@ RangeOperator <- function(attribute, from_value, to_value, include_lower = TRUE,
 ExistsOperator <- function(attribute) {
   list(
     attribute = attribute,
-    to_dict = function() {
-      list(operator = "exists", attribute = attribute)
-    }
+    operator = "exists"
+
   )
 }
 
 # Text Search Operator Classes - for type checking and compatibility
 TextSearchOperator <- list(
-  "DefaultOperator", "ExactMatchOperator", "InOperator", "ContainsWordsOperator",
-  "ContainsPhraseOperator", "ComparisonOperator", "RangeOperator", "ExistsOperator"
+  "default", "exact_match", "in", "contains_Words",
+  "contains_phrase", "ComparisonOperator", "range", "exists"
 )
