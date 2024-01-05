@@ -20,9 +20,7 @@ QueryGroup <- function(queries, logical_operator) {
         nodes = nodes
       )
 
-
 }
-
 
 ReturnType <- c(
   ENTRY = "entry",
@@ -70,7 +68,7 @@ perform_search <- function(search_operator, return_type = "ENTRY", request_optio
 }
 
 # Combine TEXTSEARCH_OPERATORS with other operators
-SEARCH_OPERATORS <- c(TextSearchOperator, "SequenceOperator", "StructureOperator", "SeqMotifOperator")
+SEARCH_OPERATORS <- c(TextSearchOperator, "sequence", "StructureOperator", "SeqMotifOperator")
 
 perform_search_with_graph <- function(query_object, return_type = "ENTRY", request_options = NULL, return_with_scores = FALSE, return_raw_json_dict = FALSE, verbosity = TRUE) {
   # Check if query_object is a SearchOperator or QueryGroup
@@ -148,7 +146,7 @@ infer_search_service <- function(search_operator) {
   }else{
     if (search_operator$operator %in% TextSearchOperator) {
     return(SearchService[["TEXT"]])
-  } else if (search_operator$operator == "SequenceOperator") {
+  } else if (search_operator$operator == "SequenceOperator" || class(search_operator) == "SequenceOperator") {
     return(SearchService[["SEQUENCE"]])
   } else if (search_operator$operator == "StructureOperator") {
     return(SearchService[["STRUCTURE"]])
@@ -174,8 +172,26 @@ QueryNode <- function(search_operator) {
 
 # Example Usage
 # Define a search operator (assuming it's already implemented)
-search_operator <- DefaultOperator(value = "ribosome")
+search_operator = ExistsOperator(
+  attribute="rcsb_accession_info.initial_release_date")
 
 # Perform search and get results
-pdb_ids <- perform_search(search_operator, return_type = "ENTRY",return_with_scores = T, return_raw_json_dict = T)
+pdb_ids <-perform_search(
+  return_type="ENTRY",
+  search_operator=SequenceOperator(
+    sequence_type="PROTEIN", # if not explicitly specified, this will autoresolve
+    sequence=(
+      "SMVNSFSGYLKLTDNVYIKNADIVEEAKKVKPTVVVNAANVYLKHGGGVAGALNKATNNAMQVESDDYIATNGPLKVGGSCVLSGHNLAKHCLHVVGPNVNKGEDIQLLKSAYENFNQHEVLLAPLLSAGIFGADPIHSLRVCVDTVRTNVYLAVFDKNLYDKLVSSFL"),
+    identity_cutoff=0.99,
+    evalue_cutoff=1000
+  ),
+  request_options=RequestOptions(
+    result_start_index=0,
+    num_results=100,
+    sort_by="rcsb_accession_info.initial_release_date",
+    desc=F
+  ),
+  return_with_scores=T
+)
+
 head(pdb_ids)

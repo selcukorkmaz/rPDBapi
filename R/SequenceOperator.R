@@ -13,12 +13,15 @@ SequenceOperator <- function(sequence, sequence_type = NULL, evalue_cutoff = 100
     sequence_type <- autoresolve_sequence_type(sequence)
   }
 
-  list(
+ res <- list(
     evalue_cutoff = evalue_cutoff,
     identity_cutoff = identity_cutoff,
     target = SequenceType[[sequence_type]],
     value = sequence
   )
+
+ attr(res, "class") <- "SequenceOperator"
+ return(res)
 }
 
 # Autoresolve Sequence Type Function

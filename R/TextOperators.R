@@ -77,10 +77,10 @@ RangeOperator <- function(attribute, from_value, to_value, include_lower = TRUE,
   list(
     operator = "range",
     attribute = attribute,
-    from_value = from_value,
-    to_value = to_value,
-    include_lower = include_lower,
-    include_upper = include_upper,
+    # from_value = from_value,
+    # to_value = to_value,
+    # include_lower = include_lower,
+    # include_upper = include_upper,
     negation = negation,
     value = list(from = from_value, to = to_value)
   )
@@ -97,6 +97,7 @@ ExistsOperator <- function(attribute) {
 
 # Text Search Operator Classes - for type checking and compatibility
 TextSearchOperator <- list(
-  "default", "exact_match", "in", "contains_Words",
-  "contains_phrase", "ComparisonOperator", "range", "exists"
+  "default", "exact_match", "in", "contains_words",
+  "contains_phrase", "ComparisonOperator", "range", "exists",
+  "greater", "greater_or_equal",  "equals", "not_equal", "less_or_equal", "less"
 )
