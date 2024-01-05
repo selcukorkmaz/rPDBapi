@@ -8,20 +8,21 @@ LogicalOperator <- c("AND" = "and", "OR" = "or")
 QueryGroup <- function(queries, logical_operator) {
 
       nodes <- lapply(queries, function(query) {
-        # if ("QueryGroup" %in% class(query)) {
+       if ("QueryGroup" %in% class(query)) {
           query
-        # } else {
-        #   QueryNode(query)  # Assuming QueryNode is defined elsewhere
-        # }
+        } else {
+          QueryNode(query, logical_operator)
+        }
       })
 
-     list(
+      list(
         type = "group",
-        logical_operator = LogicalOperator[[logical_operator]],
+        logical_operator =  LogicalOperator[[logical_operator]],
         nodes = nodes
       )
 
 }
+
 
 ReturnType <- c(
   ENTRY = "entry",
@@ -73,7 +74,7 @@ SEARCH_OPERATORS <- c(TextSearchOperator, "sequence", "StructureOperator", "SeqM
 
 perform_search_with_graph <- function(query_object, return_type = "ENTRY", request_options = NULL, return_with_scores = FALSE, return_raw_json_dict = FALSE, verbosity = TRUE) {
   # Check if query_object is a SearchOperator or QueryGroup
-  if((is.null(query_object$operator) || query_object$operator %in% SEARCH_OPERATORS) && query_object$type != "group"){
+  if((is.null(query_object$operator) || query_object$operator %in% SEARCH_OPERATORS) &&  is.null(query_object$type)){
     cast_query_object = QueryNode(query_object)
   }else{
     cast_query_object = query_object
@@ -162,12 +163,24 @@ infer_search_service <- function(search_operator) {
   }
 }
 
-QueryNode <- function(search_operator) {
-  list(
-    type = "terminal",
-    service = infer_search_service(search_operator),  # Assuming this function is defined
-    parameters = search_operator            # Assuming search_operator has a to_dict method
-  )
+QueryNode <- function(search_operator, logical_operator = NULL) {
+  if(!(is.null(search_operator$type)) && search_operator$type == "group"){
+
+    list(
+      type = "group",
+      # logical_operator = LogicalOperator[[logical_operator]],  # Assuming this function is defined
+      nodes = search_operator            # Assuming search_operator has a to_dict method
+    )
+
+  }else{
+
+    list(
+      type = "terminal",
+      service = infer_search_service(search_operator),  # Assuming this function is defined
+      parameters = search_operator            # Assuming search_operator has a to_dict method
+    )
+
+  }
 }
 
 
@@ -178,21 +191,44 @@ under_4A_resolution_operator = ComparisonOperator(
   attribute="rcsb_entry_info.resolution_combined",
   comparison_type="GREATER")
 
+results = perform_search_with_graph(
+  query_object=under_4A_resolution_operator,
+  return_type="ENTRY")
+head(results)
+
+
 # SearchOperator associated with entities containing 'Mus musculus' lineage
 is_mus_operator = ExactMatchOperator(
   value="Mus musculus",
   attribute="rcsb_entity_source_organism.taxonomy_lineage.name")
+
+results = perform_search_with_graph(
+  query_object=is_mus_operator,
+  return_type="ENTRY")
+head(results)
+
 
 # SearchOperator associated with entities containing 'Homo sapiens' lineage
 is_human_operator = ExactMatchOperator(
   value="Homo sapiens",
   attribute="rcsb_entity_source_organism.taxonomy_lineage.name")
 
+
+results = perform_search_with_graph(
+  query_object=is_human_operator,
+  return_type="ENTRY")
+head(results)
+
 # QueryGroup associated with being either human or `Mus musculus`
 is_human_or_mus_group = QueryGroup(
   queries = list(is_mus_operator, is_human_operator),
   logical_operator = "OR"
 )
+
+results = perform_search_with_graph(
+  query_object=is_human_or_mus_group,
+  return_type="ENTRY")
+head(results)
 
 # QueryGroup associated with being ((Human OR Mus) AND (Under 4 Angstroms))
 is_under_4A_and_human_and_mus_group = QueryGroup(
@@ -204,7 +240,4 @@ results = perform_search_with_graph(
   query_object=is_under_4A_and_human_and_mus_group,
   return_type="ENTRY")
 head(results)
-
-
-
 
