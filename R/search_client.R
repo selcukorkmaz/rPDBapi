@@ -6,15 +6,16 @@ SEARCH_URL_ENDPOINT <- "https://search.rcsb.org/rcsbsearch/v2/query"
 LogicalOperator <- c("AND" = "and", "OR" = "or")
 
 QueryGroup <- function(queries, logical_operator) {
+
       nodes <- lapply(queries, function(query) {
-        if (inherits(query, "QueryGroup")) {
+        # if ("QueryGroup" %in% class(query)) {
           query
-        } else {
-          QueryNode(query)  # Assuming QueryNode is defined elsewhere
-        }
+        # } else {
+        #   QueryNode(query)  # Assuming QueryNode is defined elsewhere
+        # }
       })
 
-      list(
+     list(
         type = "group",
         logical_operator = LogicalOperator[[logical_operator]],
         nodes = nodes
@@ -72,7 +73,7 @@ SEARCH_OPERATORS <- c(TextSearchOperator, "sequence", "StructureOperator", "SeqM
 
 perform_search_with_graph <- function(query_object, return_type = "ENTRY", request_options = NULL, return_with_scores = FALSE, return_raw_json_dict = FALSE, verbosity = TRUE) {
   # Check if query_object is a SearchOperator or QueryGroup
-  if(is.null(query_object$operator) || query_object$operator %in% SEARCH_OPERATORS){
+  if((is.null(query_object$operator) || query_object$operator %in% SEARCH_OPERATORS) && query_object$type != "group"){
     cast_query_object = QueryNode(query_object)
   }else{
     cast_query_object = query_object
@@ -144,15 +145,15 @@ infer_search_service <- function(search_operator) {
   if ("DefaultOperator" %in% class(search_operator)) {
     return(SearchService[["BASIC_SEARCH"]])
   }else{
-    if (!is.null(search_operator$operator) && search_operator$operator %in% TextSearchOperator) {
+    if (search_operator$operator %in% TextSearchOperator || class(search_operator) == "list") {
     return(SearchService[["TEXT"]])
   } else if ("SequenceOperator" %in% class(search_operator)) {
     return(SearchService[["SEQUENCE"]])
-  } else if (search_operator$operator == "StructureOperator") {
+  } else if ("StructureOperator" %in% class(search_operator)) {
     return(SearchService[["STRUCTURE"]])
-  } else if (search_operator$operator == "SeqMotifOperator") {
+  } else if ("SeqMotifOperator" %in% class(search_operator)) {
     return(SearchService[["SEQMOTIF"]])
-  } else if (search_operator$operator == "ChemicalOperator") {
+  } else if ("ChemicalOperator" %in% class(search_operator)) {
     return(SearchService[["CHEMICAL"]])
   } else {
     stop("CannotInferSearchServiceException: Cannot infer Search Service for the provided search operator.")
@@ -200,7 +201,7 @@ is_under_4A_and_human_and_mus_group = QueryGroup(
 )
 
 results = perform_search_with_graph(
-  query_object=is_human_or_mus_group,
+  query_object=is_under_4A_and_human_and_mus_group,
   return_type="ENTRY")
 head(results)
 
