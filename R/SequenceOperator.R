@@ -7,22 +7,24 @@ cannot_autoresolve_sequence_type_error <- function(message) {
   stop(message)
 }
 
+
 # Sequence Operator Class
 SequenceOperator <- function(sequence, sequence_type = NULL, evalue_cutoff = 100, identity_cutoff = 0.95) {
   if (is.null(sequence_type)) {
     sequence_type <- autoresolve_sequence_type(sequence)
   }
 
- res <- list(
+  res <- list(
     evalue_cutoff = evalue_cutoff,
     identity_cutoff = identity_cutoff,
     target = SequenceType[[sequence_type]],
     value = sequence
   )
 
- attr(res, "class") <- "SequenceOperator"
- return(res)
+  # Use structure to set the class attribute
+  structure(res, class = c("SequenceOperator", class(res)))
 }
+
 
 # Autoresolve Sequence Type Function
 autoresolve_sequence_type <- function(sequence) {

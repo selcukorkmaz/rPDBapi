@@ -10,45 +10,60 @@ ComparisonType <- c(
 
 # Default Operator Class
 DefaultOperator <- function(value) {
-  list(
+  res <- list(
     value = value
     )
+
+  structure(res, class = c("DefaultOperator", class(res)))
+
 }
 
 # Exact Match Operator Class
 ExactMatchOperator <- function(attribute, value) {
-  list(
+  res <- list(
     attribute = attribute,
     value = value,
     operator = "exact_match"
   )
+
+  structure(res, class = c("ExactMatchOperator", class(res)))
+
 }
 
 # In Operator Class
-InOperator <- function(attribute, values) {
-  list(
+InOperator <- function(attribute, value) {
+  res <- list(
     attribute = attribute,
     operator = "in",
-    values = values
+    value = value
   )
+
+  structure(res, class = c("InOperator", class(res)))
+
 }
 
 # Contains Words Operator Class
 ContainsWordsOperator <- function(attribute, value) {
-  list(
+  res <- list(
     attribute = attribute,
     operator = "contains_words",
     value = value
   )
+
+  structure(res, class = c("ContainsWordsOperator", class(res)))
+
 }
 
 # Contains Phrase Operator Class
 ContainsPhraseOperator <- function(attribute, value) {
-  list(
+  res <- list(
     attribute = attribute,
     operator = "contains_phrase",
     value = value
   )
+
+  structure(res, class = c("ContainsPhraseOperator", class(res)))
+
 }
 
 # Comparison Operator Class
@@ -69,12 +84,13 @@ ComparisonOperator <- function(attribute, value, comparison_type) {
 
       param_dict
 
+      structure(param_dict, class = c("ComparisonOperator", class(param_dict)))
 
 }
 
 # Range Operator Class
 RangeOperator <- function(attribute, from_value, to_value, include_lower = TRUE, include_upper = TRUE, negation = FALSE) {
-  list(
+  res <- list(
     operator = "range",
     attribute = attribute,
     # from_value = from_value,
@@ -84,15 +100,21 @@ RangeOperator <- function(attribute, from_value, to_value, include_lower = TRUE,
     negation = negation,
     value = list(from = from_value, to = to_value)
   )
+
+  structure(res, class = c("RangeOperator", class(res)))
+
 }
 
 # Exists Operator Class
 ExistsOperator <- function(attribute) {
-  list(
+  res <- list(
     attribute = attribute,
     operator = "exists"
 
   )
+
+  structure(res, class = c("SequenceOperator", class(res)))
+
 }
 
 # Text Search Operator Classes - for type checking and compatibility

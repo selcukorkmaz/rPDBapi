@@ -19,6 +19,3 @@ StructureOperator <- function(pdb_entry_id, assembly_id = 1, search_mode = "STRI
   )
 }
 
-# Example of creating a StructureOperator
-# struct_operator <- StructureOperator(pdb_entry_id = "4HHB", assembly_id = 1, search_mode = "STRICT_SHAPE_MATCH")
-# print(struct_operator$to_dict())

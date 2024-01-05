@@ -141,12 +141,12 @@ CannotInferSearchServiceException <- function(message) {
 infer_search_service <- function(search_operator) {
   # Assuming text_operators$TEXTSEARCH_OPERATORS, SequenceOperator, StructureOperator, SeqMotifOperator, and ChemicalOperator are defined elsewhere
 
-  if (is.null(search_operator$operator)) {
+  if ("DefaultOperator" %in% class(search_operator)) {
     return(SearchService[["BASIC_SEARCH"]])
   }else{
-    if (search_operator$operator %in% TextSearchOperator) {
+    if (!is.null(search_operator$operator) && search_operator$operator %in% TextSearchOperator) {
     return(SearchService[["TEXT"]])
-  } else if (search_operator$operator == "SequenceOperator" || class(search_operator) == "SequenceOperator") {
+  } else if ("SequenceOperator" %in% class(search_operator)) {
     return(SearchService[["SEQUENCE"]])
   } else if (search_operator$operator == "StructureOperator") {
     return(SearchService[["STRUCTURE"]])
@@ -171,27 +171,39 @@ QueryNode <- function(search_operator) {
 
 
 # Example Usage
-# Define a search operator (assuming it's already implemented)
-search_operator = ExistsOperator(
-  attribute="rcsb_accession_info.initial_release_date")
+# SearchOperator associated with structures with under 4 Angstroms of resolution
+under_4A_resolution_operator = ComparisonOperator(
+  value=4,
+  attribute="rcsb_entry_info.resolution_combined",
+  comparison_type="GREATER")
 
-# Perform search and get results
-pdb_ids <-perform_search(
-  return_type="ENTRY",
-  search_operator=SequenceOperator(
-    sequence_type="PROTEIN", # if not explicitly specified, this will autoresolve
-    sequence=(
-      "SMVNSFSGYLKLTDNVYIKNADIVEEAKKVKPTVVVNAANVYLKHGGGVAGALNKATNNAMQVESDDYIATNGPLKVGGSCVLSGHNLAKHCLHVVGPNVNKGEDIQLLKSAYENFNQHEVLLAPLLSAGIFGADPIHSLRVCVDTVRTNVYLAVFDKNLYDKLVSSFL"),
-    identity_cutoff=0.99,
-    evalue_cutoff=1000
-  ),
-  request_options=RequestOptions(
-    result_start_index=0,
-    num_results=100,
-    sort_by="rcsb_accession_info.initial_release_date",
-    desc=F
-  ),
-  return_with_scores=T
+# SearchOperator associated with entities containing 'Mus musculus' lineage
+is_mus_operator = ExactMatchOperator(
+  value="Mus musculus",
+  attribute="rcsb_entity_source_organism.taxonomy_lineage.name")
+
+# SearchOperator associated with entities containing 'Homo sapiens' lineage
+is_human_operator = ExactMatchOperator(
+  value="Homo sapiens",
+  attribute="rcsb_entity_source_organism.taxonomy_lineage.name")
+
+# QueryGroup associated with being either human or `Mus musculus`
+is_human_or_mus_group = QueryGroup(
+  queries = list(is_mus_operator, is_human_operator),
+  logical_operator = "OR"
 )
 
-head(pdb_ids)
+# QueryGroup associated with being ((Human OR Mus) AND (Under 4 Angstroms))
+is_under_4A_and_human_and_mus_group = QueryGroup(
+  queries = list(is_human_or_mus_group, under_4A_resolution_operator),
+  logical_operator = "AND"
+)
+
+results = perform_search_with_graph(
+  query_object=is_human_or_mus_group,
+  return_type="ENTRY")
+head(results)
+
+
+
+
