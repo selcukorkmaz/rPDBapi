@@ -32,10 +32,6 @@ add_property <- function(property) {
   return(property)
 }
 
-# Example Usage
-properties <- add_property(list(cell = c("volume", "angle_beta"), exptl = "method"))
-print(properties)
-
 
 generate_json_query <- function(ids, data_type, properties) {
   if (length(properties) == 0) {
@@ -65,16 +61,9 @@ generate_json_query <- function(ids, data_type, properties) {
 
   props_str <- paste(names(properties), props_str, collapse = ", ")
 
-  json_query <- toJSON(list(query = paste0("{", data_str, "{", props_str, "}}")), auto_unbox = T, pretty = T)
+  json_query <- paste0(list(query = paste0("{", data_str, "{", props_str, "}}")))
   return(json_query)
 }
-
-# Example Usage
-ids <- c("4LZA", "5RU3")
-data_type <- "ENTRY"
-properties <- list(cell = c("volume", "angle_beta"), exptl = "method")
-json_query <- generate_json_query(ids, data_type, properties)
-print(json_query)
 
 
 fetch_data <- function(json_query, data_type, ids) {
@@ -82,8 +71,7 @@ fetch_data <- function(json_query, data_type, ids) {
     stop("JSON query has not been created.")
   }
 
-  url <- "https://data.rcsb.org/graphql"
-  response <- httr::POST(url, body = json_query, encode = "json") #|> httr::content("parsed")
+  response <- search_graphql(list(query = json_query))
 
   if ("errors" %in% names(response)) {
     message("ERROR encountered in fetch_data().")
@@ -91,18 +79,14 @@ fetch_data <- function(json_query, data_type, ids) {
     return(NULL)
   }
 
-  if (length(response$data[[data_type]]) != length(ids)) {
-    message("WARNING: one or more IDs not found in the PDB.")
-  }
+  # if (length(response$data[[data_type]]) != length(ids)) {
+  #   message("WARNING: one or more IDs not found in the PDB.")
+  # }
 
-  return(response$data[[data_type]])
+  names(response$data[[1]]) <- ids
+
+  return(response)
 }
-
-# Example Usage
-data_type <- "ENTRY"
-ids <- c("4LZA", "5RU3")
-response <- fetch_data(json_query, data_type, ids)
-print(response)
 
 
 return_data_as_dataframe <- function(response, data_type, ids) {
@@ -110,35 +94,14 @@ return_data_as_dataframe <- function(response, data_type, ids) {
     return(NULL)
   }
 
-  data <- response[[data_type]]
+  data <- response$data[[1]]
 
-  # Flattening the data dictionary
-  data_flat <- lapply(data, function(entry) {
-    curr_dict <- list()
-    for (key in names(entry)) {
-      v <- ifelse(is.list(entry[[key]]), entry[[key]][[1]], entry[[key]])
-      if (is.character(v)) {
-        curr_dict[[key]] <- v
-      } else if (is.list(v)) {
-        for (subprop in names(v)) {
-          curr_dict[[paste(key, subprop, sep = ".")]] <- v[[subprop]]
-        }
-      }
-    }
-    curr_dict
-  })
+  flattened_data <- map(data, ~flatten(.x))
+  df <- map_df(flattened_data, ~as.data.frame(t(.x)), .id = "ID")
 
-  names(data_flat) <- ids
-  data_frame <- do.call(rbind, lapply(data_flat, as.data.frame, stringsAsFactors = FALSE))
-  return(data_frame)
+  return(df)
 }
 
-# Example Usage
-response <- list(...) # Assume response is already fetched
-data_type <- "ENTRY"
-ids <- c("4LZA", "5RU3")
-df <- return_data_as_dataframe(response, data_type, ids)
-print(df)
 
 validate_id <- function(id, data_type) {
   if (grepl("entity", data_type) && !grepl("instance", data_type)) {
@@ -157,36 +120,96 @@ validate_id <- function(id, data_type) {
 }
 
 
-DataFetcher <- function(id, data_type, properties = NULL, json_query = NULL, response = NULL) {
-  # properties <- list()
-  # json_query <- list()
-  # response <- list()
+DataFetcher <- function(id = NULL, data_type = "ENTRY", properties = NULL, return_as_dataframe = TRUE) {
 
-  # Helper function to validate ID
 
-  # Adjust ID if necessary
-  if (!is.list(id)) {
-    id <- list(id)
+  # # Adjust ID if necessary
+  # if (!is.list(id)) {
+  #   ids <- list(id)
+  # }
+  # lapply(id, validate_id, data_type)
+
+
+  properties <- add_property(properties)
+  # print(properties)
+  json_query <- generate_json_query(id, data_type, properties)
+  # print(json_query)
+  response <- fetch_data(json_query, data_type, id)
+  # print(response)
+
+  if(return_as_dataframe){
+
+    response <- return_data_as_dataframe(response, data_type, id)
+
   }
-  lapply(id, validate_id, data_type)
 
+  return(response)
 
-  list(
-    id = id,
-    data_type = data_type,
-    properties = properties,
-    json_query = json_query,
-    response = response
-    # validate_id = validate_id,
-    # add_property = add_property,
-    # generate_json_query = generate_json_query
-  )
 }
 
 # Example Usage
+
+### Fetch entries using PDB IDs
+
+
 data_fetcher <- DataFetcher(id = c("4HHB", "12CA", "3PQR"), data_type = "ENTRY",
-                            properties = list(exptl =  c("method", "details"), cell = c("length_a", "length_b", "length_c")))
-data_fetcher$generate_json_query()
-print(data_fetcher$json_query)
+                            properties = list(exptl =  c("method", "details"), cell = c("length_a", "length_b", "length_c")),
+                            return_as_dataframe = T)
 
 
+
+data_fetcher
+
+### Fetch Assemblies
+
+data_fetcher <- DataFetcher(id = c("4HHB-1", "12CA-1", "3PQR-1"), data_type = "ASSEMBLY",
+                            properties = list(rcsb_assembly_info =  c("entry_id", "assembly_id", "polymer_entity_instance_count")),
+                            return_as_dataframe = T)
+
+
+
+data_fetcher
+
+### Fetch Polymer Entities
+
+data_fetcher <- DataFetcher(id = c("2CPK_1","3WHM_1","2D5Z_1"), data_type = "POLYMER_ENTITY",
+                            properties = list(rcsb_id = "", rcsb_entity_source_organism = c("ncbi_taxonomy_id", "ncbi_scientific_name"),
+                                              rcsb_cluster_membership = c("cluster_id", "identity")),
+                            return_as_dataframe = T)
+
+
+
+data_fetcher
+
+### Fetch Polymer Entity Instance
+
+data_fetcher <- DataFetcher(id = c("4HHB.A", "12CA.A", "3PQR.A"), data_type = "POLYMER_ENTITY_INSTANCE",
+                            properties = list(rcsb_polymer_instance_annotation = c("annotation_id", "name", "type")),
+                            return_as_dataframe = T)
+
+
+
+data_fetcher
+
+
+### Fetch Branched Entity
+
+data_fetcher <- DataFetcher(id = c("5FMB_2", "6L63_3"), data_type = "BRANCHED_ENTITY",
+                            properties = list(pdbx_entity_branch = "type", pdbx_entity_branch_descriptor = c("type", "descriptor")),
+                            return_as_dataframe = T)
+
+
+
+data_fetcher
+
+
+### Fetch Chemical Components
+
+data_fetcher <- DataFetcher(id = c("NAG","EBW"), data_type = "CHEMICAL_COMPONENT",
+                            properties = list(chem_comp = c("type", "formula_weight","name","formula"),
+                                              rcsb_chem_comp_info = c("initial_release_date")),
+                            return_as_dataframe = T)
+
+
+
+data_fetcher
