@@ -6,18 +6,15 @@ PatternType <- c("SIMPLE" = "simple", "PROSITE" = "prosite", "REGEX" = "regex")
 
 # SeqMotif Operator Class
 SeqMotifOperator <- function(pattern, sequence_type, pattern_type) {
-  list(
-    pattern = pattern,
-    sequence_type = sequence_type,
-    pattern_type = pattern_type,
-    to_dict = function() {
-      list(
-        value = pattern,
-        pattern_type = PatternType[[pattern_type]],
-        target = SequenceType[[sequence_type]]
-      )
-    }
+
+  res <- list(
+    value = pattern,
+    pattern_type = PatternType[[pattern_type]],
+    target = SequenceType[[sequence_type]]
   )
+
+  structure(res, class = c("SeqMotifOperator", class(res)))
+
 }
 
 # Example of creating a SeqMotifOperator
