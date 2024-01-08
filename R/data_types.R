@@ -79,9 +79,9 @@ fetch_data <- function(json_query, data_type, ids) {
     return(NULL)
   }
 
-  # if (length(response$data[[data_type]]) != length(ids)) {
-  #   message("WARNING: one or more IDs not found in the PDB.")
-  # }
+  if (length(response$data[[1]]) != length(ids)) {
+    message("WARNING: one or more IDs not found in the PDB.")
+  }
 
   names(response$data[[1]]) <- ids
 
@@ -97,7 +97,7 @@ return_data_as_dataframe <- function(response, data_type, ids) {
   data <- response$data[[1]]
 
   flattened_data <- map(data, ~flatten(.x))
-  df <- map_df(flattened_data, ~as.data.frame(t(.x)), .id = "ID")
+  df <- map_df(flattened_data, ~as.data.frame(t(.x)), .id = "ID") %>% select_if(~ !any(is.na(.)))
 
   return(df)
 }
@@ -173,7 +173,7 @@ data_fetcher
 ### Fetch Polymer Entities
 
 data_fetcher <- DataFetcher(id = c("2CPK_1","3WHM_1","2D5Z_1"), data_type = "POLYMER_ENTITY",
-                            properties = list(rcsb_id = "", rcsb_entity_source_organism = c("ncbi_taxonomy_id", "ncbi_scientific_name"),
+                            properties = list(rcsb_entity_source_organism = c("ncbi_taxonomy_id", "ncbi_scientific_name"),
                                               rcsb_cluster_membership = c("cluster_id", "identity")),
                             return_as_dataframe = T)
 
