@@ -1,5 +1,3 @@
-# Sequence Types (similar to Enum in Python)
-SequenceType <- c("DNA" = "pdb_dna_sequence", "RNA" = "pdb_rna_sequence", "PROTEIN" = "pdb_protein_sequence")
 
 # Cannot Autoresolve Sequence Type Exception
 # In R, custom exceptions are not typical; use standard error messaging

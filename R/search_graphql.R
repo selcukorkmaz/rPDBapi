@@ -1,6 +1,17 @@
-library(httr)
-
-RSCB_GRAPHQL_URL <- "https://data.rcsb.org/graphql?query="
+#' Perform a GraphQL Query to RCSB PDB
+#'
+#' Executes a GraphQL query against the RCSB Protein Data Bank (PDB).
+#' It sends the query in JSON format and handles the HTTP response, including error checking.
+#'
+#' @param graphql_json_query A list containing the GraphQL query in JSON format.
+#' @return The parsed content of the response from the PDB.
+#' @examples
+#' graphql_json_query <- list(query = "{entries(entry_ids: [\"4LZA\", \"5RU3\"]){cell {volume, angle_beta}, exptl {method}}}")
+#' result <- search_graphql(graphql_json_query)
+#' result
+#' @export
+#' @importFrom httr POST content
+#' @importFrom jsonlite fromJSON
 
 search_graphql <- function(graphql_json_query) {
   response <- POST(url = RSCB_GRAPHQL_URL, body = graphql_json_query, encode = "json")
@@ -13,7 +24,4 @@ search_graphql <- function(graphql_json_query) {
   return(content(response, "parsed"))
 }
 
-# Example Usage
-graphql_json_query <- list(query = "{entries(entry_ids: [\"4LZA\", \"5RU3\"]){cell {volume, angle_beta}, exptl {method}}}")
-result <- search_graphql(graphql_json_query)
-print(result)
+

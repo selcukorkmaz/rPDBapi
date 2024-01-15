@@ -1,11 +1,3 @@
-DescriptorMatchingCriterion <- c(
-  GRAPH_STRICT = "graph-strict",
-  GRAPH_RELAXED = "graph-relaxed",
-  GRAPH_RELAXED_STEREO = "graph-relaxed-stereo",
-  FINGERPRINT_SIMILARITY = "fingerprint-similarity"
-)
-
-
 #' Chemical Operator for SMILES/InChI Searches
 #'
 #' Creates an object representing a chemical search operator using SMILES or InChI descriptors.
@@ -34,8 +26,3 @@ ChemicalOperator <- function(descriptor, matching_criterion = "graph-strict") {
   structure(res, class = c("ChemicalOperator", class(res)))
 
 }
-
-# Example Usage
-# chemical_operator <- ChemicalOperator(descriptor = "C1=CC=CC=C1", matching_criterion = DescriptorMatchingCriterion["GRAPH_STRICT"])
-# dict_representation <- chemical_operator
-# print(dict_representation)

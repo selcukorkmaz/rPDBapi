@@ -1,4 +1,4 @@
-#' Retrieve Information for a Given PDB ID
+#' Retrieve Information for a Given PDB Entry
 #'
 #' This function looks up all information about a given PDB ID using the REST API.
 #' It handles JSON data and HTTP requests and converts old entry identifiers.
@@ -26,7 +26,3 @@ get_info <- function(pdb_id, url_root = 'https://data.rcsb.org/rest/v1/core/entr
   return(out)
 }
 
-# Alias the function
-get_all_info <- get_info
-describe_pdb <- get_info
-get_entity_info <- get_info

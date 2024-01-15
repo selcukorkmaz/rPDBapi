@@ -1,6 +1,3 @@
-library(httr)
-library(jsonlite)
-
 #' Describe Chemical Compound from RCSB PDB
 #'
 #' This function retrieves the description of a chemical compound from the RCSB PDB based on its ID.
@@ -31,6 +28,3 @@ describe_chemical <- function(chem_id) {
   return(out)
 }
 
-# Example Usage
-# chem_desc <- describe_chemical('NAG')
-# print(chem_desc$rcsb_chem_comp_descriptor$smiles)

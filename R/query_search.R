@@ -1,6 +1,3 @@
-library(httr)
-library(jsonlite)
-
 #' Search Query Function
 #'
 #' This function performs a search query against the RCSB Protein Data Bank
@@ -22,7 +19,7 @@ library(jsonlite)
 #'
 #' @examples
 #' pdbs <- query_search(search_term = "actin network")
-#' print(pdbs)
+#' pdbs
 #'
 #' @export
 

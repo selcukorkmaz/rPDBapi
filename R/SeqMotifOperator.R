@@ -1,10 +1,17 @@
-# Sequence Types (similar to Enum in Python)
-SequenceType <- c("DNA" = "pdb_dna_sequence", "RNA" = "pdb_rna_sequence", "PROTEIN" = "pdb_protein_sequence")
 
-# Pattern Types
-PatternType <- c("SIMPLE" = "simple", "PROSITE" = "prosite", "REGEX" = "regex")
-
-# SeqMotif Operator Class
+#' Create a Sequence Motif Operator for Searches
+#'
+#' Constructs a SeqMotifOperator object for use in sequence motif searches within the RCSB PDB.
+#' This operator allows specifying a pattern, sequence type, and pattern type.
+#'
+#' @param pattern A string representing the motif pattern to search for.
+#' @param sequence_type A string indicating the type of sequence ('DNA', 'RNA', or 'PROTEIN').
+#' @param pattern_type A string indicating the type of pattern ('SIMPLE', 'PROSITE', or 'REGEX').
+#' @return An object of class 'SeqMotifOperator' representing the sequence motif operator.
+#' @examples
+#' seq_motif_operator <- SeqMotifOperator(pattern = "A[TU]G", sequence_type = "DNA", pattern_type = "REGEX")
+#' seq_motif_operator
+#' @export
 SeqMotifOperator <- function(pattern, sequence_type, pattern_type) {
 
   res <- list(
@@ -17,6 +24,3 @@ SeqMotifOperator <- function(pattern, sequence_type, pattern_type) {
 
 }
 
-# Example of creating a SeqMotifOperator
-# seq_motif_operator <- SeqMotifOperator(pattern = "A[TU]G", sequence_type = "DNA", pattern_type = "REGEX")
-# print(seq_motif_operator$to_dict())

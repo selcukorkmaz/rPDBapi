@@ -1,12 +1,3 @@
-# Comparison Types (similar to Enum in Python)
-ComparisonType <- c(
-  "GREATER" = "greater",
-  "GREATER_OR_EQUAL" = "greater_or_equal",
-  "EQUAL" = "equals",
-  "NOT_EQUAL" = "not_equal",
-  "LESS_OR_EQUAL" = "less_or_equal",
-  "LESS" = "less"
-)
 
 # Default Operator Class
 DefaultOperator <- function(value) {
@@ -117,9 +108,4 @@ ExistsOperator <- function(attribute) {
 
 }
 
-# Text Search Operator Classes - for type checking and compatibility
-TextSearchOperator <- list(
-  "default", "exact_match", "in", "contains_words",
-  "contains_phrase", "ComparisonOperator", "range", "exists",
-  "greater", "greater_or_equal",  "equals", "not_equal", "less_or_equal", "less"
-)
+
