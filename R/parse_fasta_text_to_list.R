@@ -32,7 +32,6 @@ FastaSequence <- function(entity_id, chains, sequence, fasta_header) {
 #' raw_fasta_text <- ">1XYZ|Chains A, B\nMVLSPADKT...\n>2XYZ|Chain C\nGVLSADFT..."
 #' fasta_list <- parse_fasta_text_to_list(raw_fasta_text)
 #' @export
-#' @importFrom stringr strsplit
 parse_fasta_text_to_list <- function(raw_fasta_text) {
   # Splitting the raw FASTA text into sequences
   fasta_sequence_chunks <- strsplit(raw_fasta_text, ">")[[1]][-1]

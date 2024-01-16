@@ -4,7 +4,7 @@
 #'
 #' @param chem_id A string representing the 3-character chemical ID.
 #' @return A dictionary containing the chemical description.
-#' @importFrom httr GET
+#' @importFrom httr GET http_status
 #' @importFrom jsonlite fromJSON
 #' @examples
 #' chem_desc <- describe_chemical('NAG')

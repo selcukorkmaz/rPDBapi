@@ -6,11 +6,6 @@
 #' @param queries A list of query objects to be grouped together.
 #' @param logical_operator A string specifying the logical operator (e.g., 'AND', 'OR') to combine the queries.
 #' @return A list representing the grouped query object.
-#' @examples
-#' human_operator <- ExactMatchOperator(value="Homo sapiens", attribute="rcsb_entity_source_organism.taxonomy_lineage.name")
-#' mus_operator <- ExactMatchOperator(value="Mus musculus", attribute="rcsb_entity_source_organism.taxonomy_lineage.name")
-#' group_query <- QueryGroup(list(human_operator, mus_operator), "OR")
-#' group_query
 #' @export
 
 QueryGroup <- function(queries, logical_operator) {
@@ -40,8 +35,6 @@ QueryGroup <- function(queries, logical_operator) {
 #' @param sort_by A string indicating the attribute to sort by, default is 'score'.
 #' @param desc A boolean indicating whether sorting should be in descending order, default is TRUE.
 #' @return A list of request options.
-#' @examples
-#' options <- RequestOptions(num_results = 10, sort_by = "resolution")
 #' @export
 #'
 RequestOptions <- function(result_start_index = NULL, num_results = NULL, sort_by = "score", desc = TRUE) {
@@ -65,8 +58,6 @@ RequestOptions <- function(result_start_index = NULL, num_results = NULL, sort_b
 #' @param entity_id A string representing the entity ID.
 #' @param score A numeric value representing the score associated with the entity.
 #' @return A list representing the scored result.
-#' @examples
-#' scored_result <- ScoredResult("1XYZ", 9.8)
 #' @export
 ScoredResult <- function(entity_id, score) {
   list(
@@ -94,17 +85,13 @@ CannotInferSearchServiceException <- function(message) {
 #'
 #' @param search_operator A query operator object.
 #' @return The inferred search service.
-#' @examples
-#' search_op <- ExactMatchOperator(value="Homo sapiens", attribute="rcsb_entity_source_organism.taxonomy_lineage.name")
-#' service <- infer_search_service(search_op)
-#' service
 #' @export
 infer_search_service <- function(search_operator) {
 
   if ("DefaultOperator" %in% class(search_operator)) {
     return(SearchService[["BASIC_SEARCH"]])
   }else{
-    if (search_operator$operator %in% TextSearchOperator || class(search_operator) == "list") {
+    if (search_operator$operator %in% TextSearchOperator || is.list(search_operator)) {
     return(SearchService[["TEXT"]])
   } else if ("SequenceOperator" %in% class(search_operator)) {
     return(SearchService[["SEQUENCE"]])
@@ -128,11 +115,6 @@ infer_search_service <- function(search_operator) {
 #' @param search_operator A search operator or group object.
 #' @param logical_operator A string specifying the logical operator, default is NULL. Used only if the search_operator is a group.
 #' @return A list representing the query node.
-#' @examples
-#' search_op <- ExactMatchOperator(value="Homo sapiens", attribute="rcsb_entity_source_organism.taxonomy_lineage.name")
-#' query_node <- QueryNode(search_op)
-#' query_node
-#'
 #' @export
 
 QueryNode <- function(search_operator, logical_operator = NULL) {
@@ -156,60 +138,4 @@ QueryNode <- function(search_operator, logical_operator = NULL) {
 }
 
 
-# Example Usage
-# SearchOperator associated with structures with under 4 Angstroms of resolution
-under_4A_resolution_operator = ComparisonOperator(
-  value=4,
-  attribute="rcsb_entry_info.resolution_combined",
-  comparison_type="GREATER")
-
-results = perform_search_with_graph(
-  query_object=under_4A_resolution_operator,
-  return_type="ENTRY")
-head(results)
-
-
-# SearchOperator associated with entities containing 'Mus musculus' lineage
-is_mus_operator = ExactMatchOperator(
-  value="Mus musculus",
-  attribute="rcsb_entity_source_organism.taxonomy_lineage.name")
-
-results = perform_search_with_graph(
-  query_object=is_mus_operator,
-  return_type="ENTRY")
-head(results)
-
-
-# SearchOperator associated with entities containing 'Homo sapiens' lineage
-is_human_operator = ExactMatchOperator(
-  value="Homo sapiens",
-  attribute="rcsb_entity_source_organism.taxonomy_lineage.name")
-
-
-results = perform_search_with_graph(
-  query_object=is_human_operator,
-  return_type="ENTRY")
-head(results)
-
-# QueryGroup associated with being either human or `Mus musculus`
-is_human_or_mus_group = QueryGroup(
-  queries = list(is_mus_operator, is_human_operator),
-  logical_operator = "OR"
-)
-
-results = perform_search_with_graph(
-  query_object=is_human_or_mus_group,
-  return_type="ENTRY")
-head(results)
-
-# QueryGroup associated with being ((Human OR Mus) AND (Under 4 Angstroms))
-is_under_4A_and_human_and_mus_group = QueryGroup(
-  queries = list(is_human_or_mus_group, under_4A_resolution_operator),
-  logical_operator = "AND"
-)
-
-results = perform_search_with_graph(
-  query_object=is_under_4A_and_human_and_mus_group,
-  return_type="ENTRY")
-head(results)
 

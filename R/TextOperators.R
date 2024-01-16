@@ -1,5 +1,11 @@
-
-# Default Operator Class
+#' Create a Default Search Operator
+#'
+#' Constructs a DefaultOperator object for use in general search operations within the RCSB PDB.
+#' This operator is a basic search operator with a single value.
+#'
+#' @param value The value to be used in the search operation.
+#' @return An object of class 'DefaultOperator' representing the default search operator.
+#' @export
 DefaultOperator <- function(value) {
   res <- list(
     value = value
@@ -9,7 +15,15 @@ DefaultOperator <- function(value) {
 
 }
 
-# Exact Match Operator Class
+#' Create an Exact Match Search Operator
+#'
+#' Constructs an ExactMatchOperator object for precise search operations in the RCSB PDB.
+#' It matches an exact attribute value.
+#'
+#' @param attribute The attribute to match.
+#' @param value The exact value to search for.
+#' @return An object of class 'ExactMatchOperator'.
+#' @export
 ExactMatchOperator <- function(attribute, value) {
   res <- list(
     attribute = attribute,
@@ -21,7 +35,14 @@ ExactMatchOperator <- function(attribute, value) {
 
 }
 
-# In Operator Class
+#' Create an Inclusion Search Operator
+#'
+#' Constructs an InOperator object for search operations where the attribute value must be within a specified set.
+#'
+#' @param attribute The attribute to be evaluated.
+#' @param value The set of values to include in the search.
+#' @return An object of class 'InOperator'.
+#' @export
 InOperator <- function(attribute, value) {
   res <- list(
     attribute = attribute,
@@ -33,7 +54,14 @@ InOperator <- function(attribute, value) {
 
 }
 
-# Contains Words Operator Class
+#' Create a Contains Words Search Operator
+#'
+#' Constructs a ContainsWordsOperator object for search operations that look for attributes containing certain words.
+#'
+#' @param attribute The attribute to be evaluated.
+#' @param value The words to search for in the attribute.
+#' @return An object of class 'ContainsWordsOperator'.
+#' @export
 ContainsWordsOperator <- function(attribute, value) {
   res <- list(
     attribute = attribute,
@@ -45,7 +73,14 @@ ContainsWordsOperator <- function(attribute, value) {
 
 }
 
-# Contains Phrase Operator Class
+#' Create a Contains Phrase Search Operator
+#'
+#' Constructs a ContainsPhraseOperator object for search operations that look for attributes containing a specific phrase.
+#'
+#' @param attribute The attribute to be evaluated.
+#' @param value The phrase to search for in the attribute.
+#' @return An object of class 'ContainsPhraseOperator'.
+#' @export
 ContainsPhraseOperator <- function(attribute, value) {
   res <- list(
     attribute = attribute,
@@ -57,7 +92,15 @@ ContainsPhraseOperator <- function(attribute, value) {
 
 }
 
-# Comparison Operator Class
+#'Create a Comparison Search Operator
+#'
+#' Constructs a ComparisonOperator object for search operations that perform comparison checks on attribute values.
+#'
+#' @param attribute The attribute to be compared.
+#' @param value The value to compare against.
+#' @param comparison_type A string specifying the type of comparison (e.g., 'equal', 'greater_than').
+#' @return An object of class 'ComparisonOperator'.
+#' @export
 ComparisonOperator <- function(attribute, value, comparison_type) {
   # list(
   #   attribute = attribute,
@@ -79,7 +122,18 @@ ComparisonOperator <- function(attribute, value, comparison_type) {
 
 }
 
-# Range Operator Class
+#' Create a Range Search Operator
+#'
+#' Constructs a RangeOperator object for search operations that specify a range for attribute values.
+#'
+#' @param attribute The attribute to be evaluated within a range.
+#' @param from_value The starting value of the range.
+#' @param to_value The ending value of the range.
+#' @param include_lower Boolean to include the lower bound in the range.
+#' @param include_upper Boolean to include the upper bound in the range.
+#' @param negation Boolean to negate the range condition.
+#' @return An object of class 'RangeOperator'.
+#' @export
 RangeOperator <- function(attribute, from_value, to_value, include_lower = TRUE, include_upper = TRUE, negation = FALSE) {
   res <- list(
     operator = "range",
@@ -96,7 +150,13 @@ RangeOperator <- function(attribute, from_value, to_value, include_lower = TRUE,
 
 }
 
-# Exists Operator Class
+#' Create an Existence Search Operator
+#'
+#' Constructs an ExistsOperator object for search operations to check the existence of an attribute.
+#'
+#' @param attribute The attribute whose existence is to be checked.
+#' @return An object of class 'ExistsOperator'.
+#' @export
 ExistsOperator <- function(attribute) {
   res <- list(
     attribute = attribute,

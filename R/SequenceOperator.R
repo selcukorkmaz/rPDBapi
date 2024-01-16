@@ -1,12 +1,27 @@
-
-# Cannot Autoresolve Sequence Type Exception
-# In R, custom exceptions are not typical; use standard error messaging
+#' Raise Error for Unresolvable Sequence Types
+#'
+#' Throws an error when a sequence type cannot be automatically determined.
+#' This function is used within the autoresolve_sequence_type function.
+#'
+#' @param message A descriptive error message to display.
+#' @export
 cannot_autoresolve_sequence_type_error <- function(message) {
   stop(message)
 }
 
 
-# Sequence Operator Class
+#' Create a Sequence Operator for Sequence-Based Searches
+#'
+#' Constructs a SequenceOperator object for use in sequence-based searches within the RCSB PDB.
+#' This operator allows specifying a sequence, its type, and cutoffs for e-value and identity.
+#'
+#' @param sequence A string representing the sequence to search for.
+#' @param sequence_type Optional: a string indicating the type of sequence ('DNA', 'RNA', or 'PROTEIN').
+#'   If not provided, the type is autoresolved.
+#' @param evalue_cutoff A numeric value for the e-value cutoff in the search, default is 100.
+#' @param identity_cutoff A numeric value for the identity cutoff in the search, default is 0.95.
+#' @return An object of class 'SequenceOperator' representing the sequence operator.
+#' @export
 SequenceOperator <- function(sequence, sequence_type = NULL, evalue_cutoff = 100, identity_cutoff = 0.95) {
   if (is.null(sequence_type)) {
     sequence_type <- autoresolve_sequence_type(sequence)
@@ -24,7 +39,13 @@ SequenceOperator <- function(sequence, sequence_type = NULL, evalue_cutoff = 100
 }
 
 
-# Autoresolve Sequence Type Function
+#' Automatically Determine the Sequence Type
+#'
+#' This function determines the type of a given sequence (DNA, RNA, or PROTEIN) based on its characters.
+#'
+#' @param sequence A string representing the sequence to be analyzed.
+#' @return A string indicating the resolved sequence type.
+#' @export
 autoresolve_sequence_type <- function(sequence) {
   unique_letters <- unique(strsplit(sequence, "")[[1]])
 
@@ -45,8 +66,3 @@ autoresolve_sequence_type <- function(sequence) {
     )
   }
 }
-
-
-# Example of creating a SequenceOperator
-# seq_operator <- SequenceOperator(sequence = "ATCG", evalue_cutoff = 100, identity_cutoff = 0.95)
-# print(seq_operator$to_dict())

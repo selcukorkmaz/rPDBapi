@@ -9,13 +9,9 @@
 #'   Default is "citation".
 #' @return A named list where each element's name is a PDB ID and its value is the information
 #'   for the specified field from the corresponding search result.
-#' @examples
-#' result_list <- find_results("bleb", field = "citation")
-#' result_list[1:5]
-#' @export
 #' @importFrom jsonlite fromJSON
 #' @importFrom httr GET
-
+#' @export
 find_results <- function(search_term, field = "citation") {
 
   # Retrieve search result IDs

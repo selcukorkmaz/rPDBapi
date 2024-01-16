@@ -75,4 +75,8 @@ PatternType <- c("SIMPLE" = "simple", "PROSITE" = "prosite", "REGEX" = "regex")
 # Sequence Types
 SequenceType <- c("DNA" = "pdb_dna_sequence", "RNA" = "pdb_rna_sequence", "PROTEIN" = "pdb_protein_sequence")
 
-
+# Structure Search Modes (similar to Enum in Python)
+StructureSearchMode <- c(
+  "STRICT_SHAPE_MATCH" = "strict_shape_match",
+  "RELAXED_SHAPE_MATCH" = "relaxed_shape_match"
+)

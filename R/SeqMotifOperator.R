@@ -9,7 +9,9 @@
 #' @param pattern_type A string indicating the type of pattern ('SIMPLE', 'PROSITE', or 'REGEX').
 #' @return An object of class 'SeqMotifOperator' representing the sequence motif operator.
 #' @examples
-#' seq_motif_operator <- SeqMotifOperator(pattern = "A[TU]G", sequence_type = "DNA", pattern_type = "REGEX")
+#' seq_motif_operator <- SeqMotifOperator(pattern = "A[TU]G",
+#'                                        sequence_type = "DNA",
+#'                                        pattern_type = "REGEX")
 #' seq_motif_operator
 #' @export
 SeqMotifOperator <- function(pattern, sequence_type, pattern_type) {

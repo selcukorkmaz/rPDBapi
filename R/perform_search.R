@@ -10,12 +10,9 @@
 #' @param return_raw_json_dict A boolean indicating whether to return raw JSON response, default is FALSE.
 #' @param verbosity A boolean flag indicating whether to display verbose messages during execution, default is TRUE.
 #' @return The search results, which can vary based on the return type and options specified.
-#' @examples
-#' search_op <- create_search_operator(...) # assuming create_search_operator is defined
-#' results <- perform_search(search_op, return_type = "ENTRY")
-#' @export
 #' @importFrom httr POST
 #' @importFrom jsonlite toJSON
+#' @export
 perform_search <- function(search_operator, return_type = "ENTRY", request_options = NULL, return_with_scores = FALSE, return_raw_json_dict = FALSE, verbosity = TRUE) {
   # Assuming perform_search_with_graph is already defined in R
   results <- perform_search_with_graph(

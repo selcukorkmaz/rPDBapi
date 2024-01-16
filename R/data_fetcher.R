@@ -13,8 +13,7 @@
 #'   Default is TRUE.
 #' @return Depending on the value of 'return_as_dataframe',
 #'   this function returns either a dataframe or data in its original format.
-#' @examples
-#' data_fetcher(id = 123, data_type = "ENTRY", properties = list(cell = c("volume", "angle_beta")), return_as_dataframe = TRUE)
+#' @importFrom purrr flatten
 #' @export
 data_fetcher <- function(id = NULL, data_type = "ENTRY", properties = NULL, return_as_dataframe = TRUE) {
 

@@ -7,11 +7,8 @@
 #' @param verbosity A boolean flag indicating whether to print status messages during the function execution.
 #'   Defaults to TRUE.
 #' @return A list of FASTA sequences associated with the provided RCSB entry ID.
-#' @examples
-#' fasta_sequences <- get_fasta_from_rcsb_entry("4HHB")
-#' fasta_sequences
 #' @export
-#' @importFrom httr GET
+#' @importFrom httr GET http_status
 #' @importFrom jsonlite fromJSON
 get_fasta_from_rcsb_entry <- function(rcsb_id, verbosity = TRUE) {
   if (verbosity) {

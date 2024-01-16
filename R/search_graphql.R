@@ -6,7 +6,9 @@
 #' @param graphql_json_query A list containing the GraphQL query in JSON format.
 #' @return The parsed content of the response from the PDB.
 #' @examples
-#' graphql_json_query <- list(query = "{entries(entry_ids: [\"4LZA\", \"5RU3\"]){cell {volume, angle_beta}, exptl {method}}}")
+#' graphql_json_query <- list(query = "{entries(entry_ids:
+#'                           [\"4LZA\", \"5RU3\"]){cell {volume, angle_beta},
+#'                           exptl {method}}}")
 #' result <- search_graphql(graphql_json_query)
 #' result
 #' @export

@@ -9,12 +9,10 @@
 #' @param ids A vector of identifiers corresponding to the response data.
 #' @return A dataframe constructed from the response data.
 #'   Returns NULL if the response is null or empty.
-#' @examples
-#' response <- fetch_data(json_query, data_type = "ENTRY", ids = c("1XYZ"))
-#' df <- return_data_as_dataframe(response, "ENTRY", c("1XYZ"))
-#' @export
 #' @importFrom purrr map map_df
 #' @importFrom dplyr select_if
+#' @importFrom magrittr %>%
+#' @export
 return_data_as_dataframe <- function(response, data_type, ids) {
   if (is.null(response) || length(response) == 0) {
     return(NULL)

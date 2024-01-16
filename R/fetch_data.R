@@ -8,11 +8,9 @@
 #' @param ids A vector of identifiers to fetch data for.
 #' @return A list containing the data fetched from the PDB, with the names of the list elements set to the corresponding IDs.
 #'   If an error is encountered in the data fetching process, the function returns `NULL`.
-#' @examples
-#' json_query <- generate_json_query(id = "1XYZ", data_type = "ENTRY", properties = list(cell = c("volume")))
-#' fetch_data(json_query, data_type = "ENTRY", ids = c("1XYZ"))
-#' @export
 #' @importFrom jsonlite fromJSON
+#' @export
+
 fetch_data <- function(json_query, data_type, ids) {
   if (length(json_query) == 0) {
     stop("JSON query has not been created.")

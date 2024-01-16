@@ -5,18 +5,30 @@
 #'
 #' @param pdb_id A 4-character string specifying a PDB entry of interest.
 #' @param filetype The file type: 'pdb', 'cif', 'xml', or 'structfact'. Default is 'pdb'.pdb is the older file format and cif is the newer replacement. xlm is also can be obtained and parsed. structfact retrieves structure factors (only available for certain PDB entries).
-#' @param path The path where the file should be saved. If NULL, the file is saved in a temporary directory.
+#' @param rm.insert Logical, if TRUE PDB insert records are ignored.
+#' @param rm.alt Logical, if TRUE PDB alternate records are ignored.
 #' @param compression Logical indicating whether to request the data as a compressed version. Default is FALSE.
+#' @param save Logical, if TRUE saves PDB file to the desired path.
+#' @param path The path where the file should be saved. If NULL, the file is saved in a temporary directory.
 #' @return The uncompressed string representing the full PDB file or NULL if the request fails.
-#' @importFrom httr GET
+#' @importFrom httr GET http_status
+#' @importFrom utils download.file
+#' @importFrom stats na.omit
+#' @importFrom xml2 read_xml as_list
 #' @examples
 #' # Example usage:
-#' # pdb_file <- get_pdb_file(pdb_id = "2HHB", filetype = "structfact", compression = TRUE, save = TRUE, path = "~/Downloads")
+#' pdb_file <- get_pdb_file(pdb_id = "2HHB",
+#'                           filetype = "cif",
+#'                           compression = TRUE,
+#'                           save = TRUE,
+#'                           path = NULL)
+#' @import bio3d
 #' @export
-get_pdb_file <- function(pdb_id, filetype = 'cif', compression = FALSE, save = FALSE,  path = NULL) {
+get_pdb_file <- function(pdb_id, filetype = 'cif', rm.insert = FALSE, rm.alt = TRUE, compression = FALSE, save = FALSE,  path = NULL) {
 
   PDB_DOWNLOAD_BASE_URL <- "https://files.rcsb.org/download/"
 
+  cl <- match.call()
   if (filetype == 'cif' && !compression) {
     warning("Consider using `get_pdb_file` with compression=TRUE for CIF files (it makes the file download faster!)")
   }
@@ -72,20 +84,20 @@ get_pdb_file <- function(pdb_id, filetype = 'cif', compression = FALSE, save = F
 
     if(filetype == 'pdb'){
 
-      result <- bio3d:::.read_pdb(path)
+      result <- bio3d::read.pdb(path)
 
     }
 
     if(filetype == 'cif'){
 
-      pdb <- bio3d:::.read_cif(path)
+      pdb <- bio3d::read.cif(path)
 
     }
 
     if(filetype == 'xml'){
 
       xml_file <- read_xml(path)
-      pdb <-  xml2::as_list(xml_file)
+      pdb <-  as_list(xml_file)
 
     }
 
@@ -104,9 +116,9 @@ get_pdb_file <- function(pdb_id, filetype = 'cif', compression = FALSE, save = F
         stop(paste("Error in reading CIF file", file))
       } else {class(pdb) <- c("pdb")}
 
-      if (filetype == "cif" && pdb$models > 1){
-        pdb$xyz <- matrix(pdb$xyz, nrow = pdb$models, byrow = TRUE)
-      }
+      # if (filetype == "cif" && pdb$models > 1){
+      #   pdb$xyz <- matrix(pdb$xyz, nrow = pdb$models, byrow = TRUE)
+      # }
 
       pdb$xyz <- as.xyz(pdb$xyz)
       pdb$atom[pdb$atom == ""] <- NA

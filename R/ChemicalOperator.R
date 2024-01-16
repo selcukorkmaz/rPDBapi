@@ -5,10 +5,7 @@
 #' @param descriptor A valid SMILES or InChI string.
 #' @param matching_criterion The criterion for matching, one of the values from DescriptorMatchingCriterion.
 #'                           Defaults to "graph-strict".
-#' @return A list representing a chemical operator, with a method `to_dict` for converting to a dictionary-like structure.
-#' @examples
-#' chemical_operator <- ChemicalOperator(descriptor = "C1=CC=CC=C1")
-#' chemical_operator
+#' @return A list representing a chemical operator.
 ChemicalOperator <- function(descriptor, matching_criterion = "graph-strict") {
   if (startsWith(descriptor, "InChI=")) {
     descriptor_type <- "InChI"

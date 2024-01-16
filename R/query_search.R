@@ -16,11 +16,6 @@
 #'
 #' @return Depending on the return_type, it either returns a list of PDB IDs (if "entry")
 #'         or the full response from the API.
-#'
-#' @examples
-#' pdbs <- query_search(search_term = "actin network")
-#' pdbs
-#'
 #' @export
 
 query_search <- function(search_term, query_type = "full_text", return_type = "entry", scan_params = NULL, num_attempts = 1, sleep_time = 0.5) {

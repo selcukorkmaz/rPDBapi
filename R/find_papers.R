@@ -8,12 +8,9 @@
 #' @param max_results An integer indicating the maximum number of paper titles to retrieve.
 #'   Defaults to 10.
 #' @return A named list where each element's name is a PDB ID and its value is the title of the corresponding paper.
-#' @examples
-#' matching_papers <- find_papers('crispr', max_results = 5)
-#' matching_papers
-#' @export
 #' @importFrom jsonlite fromJSON
 #' @importFrom httr GET
+#' @export
 find_papers <- function(search_term, max_results = 10) {
   # Assuming Query and get_info functions are already defined in R
 
@@ -33,6 +30,3 @@ find_papers <- function(search_term, max_results = 10) {
   return((all_papers))
 }
 
-# Example Usage
-matching_papers <- find_papers('crispr', max_results = 5)
-print(matching_papers)
