@@ -36,11 +36,3 @@ The uncompressed string representing the full PDB file or NULL if the request fa
 This function downloads PDB files from the RCSB database, supporting different file types and optional compression.
 It warns to consider compression for CIF files for faster download.
 }
-\examples{
-# Example usage:
-pdb_file <- get_pdb_file(pdb_id = "2HHB",
-                          filetype = "cif",
-                          compression = TRUE,
-                          save = TRUE,
-                          path = NULL)
-}

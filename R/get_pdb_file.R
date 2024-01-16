@@ -15,14 +15,7 @@
 #' @importFrom utils download.file
 #' @importFrom stats na.omit
 #' @importFrom xml2 read_xml as_list
-#' @examples
-#' # Example usage:
-#' pdb_file <- get_pdb_file(pdb_id = "2HHB",
-#'                           filetype = "cif",
-#'                           compression = TRUE,
-#'                           save = TRUE,
-#'                           path = NULL)
-#' @import bio3d
+#' @importFrom bio3d read.pdb read.cif as.xyz trim.xyz atom2xyz atom.select.pdb
 #' @export
 get_pdb_file <- function(pdb_id, filetype = 'cif', rm.insert = FALSE, rm.alt = TRUE, compression = FALSE, save = FALSE,  path = NULL) {
 
@@ -84,13 +77,13 @@ get_pdb_file <- function(pdb_id, filetype = 'cif', rm.insert = FALSE, rm.alt = T
 
     if(filetype == 'pdb'){
 
-      result <- bio3d::read.pdb(path)
+      result <- read.pdb(path)
 
     }
 
     if(filetype == 'cif'){
 
-      pdb <- bio3d::read.cif(path)
+      pdb <- read.cif(path)
 
     }
 
