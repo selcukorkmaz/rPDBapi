@@ -10,14 +10,23 @@
 #' @param compression Logical indicating whether to request the data as a compressed version. Default is TRUE
 #' @param save Logical, if TRUE saves PDB file to the desired path.
 #' @param path The path where the file should be saved. If NULL, the file is saved in a temporary directory.
-#' @return The uncompressed string representing the full PDB file or NULL if the request fails.
+#' @return  Returns a list of class \code{"pdb"} with the following components:
+#' \item{atom}{ a data.frame containing all atomic coordinate ATOM and
+#' HETATM data, with a row per ATOM/HETATM and a column per record type.}
+#' \item{xyz }{ a numeric matrix of class \code{"xyz"} containing the
+#' ATOM and HETATM coordinate data. }
+#' \item{calpha }{ logical vector with length equal to \code{nrow(atom)} with TRUE
+#' values indicating a C-alpha \dQuote{elety}. }
+#' \item{call }{ the matched call. }
 #' @importFrom httr GET http_status
 #' @importFrom utils download.file
 #' @importFrom stats na.omit
 #' @importFrom xml2 read_xml as_list
 #' @importFrom bio3d read.pdb read.cif as.xyz trim.xyz atom2xyz atom.select.pdb
-#' @example path.R
+#' @examples
+#' pdb_file <-  get_pdb_file(pdb_id = "4HHB", filetype = "cif")
 #' @export
+
 get_pdb_file <- function(pdb_id, filetype = 'cif', rm.insert = FALSE, rm.alt = TRUE, compression = TRUE, save = FALSE,  path = NULL) {
 
   PDB_DOWNLOAD_BASE_URL <- "https://files.rcsb.org/download/"
@@ -123,8 +132,8 @@ get_pdb_file <- function(pdb_id, filetype = 'cif', rm.insert = FALSE, rm.alt = T
       if (rm.alt) {
         if (sum(!is.na(pdb$atom$alt)) > 0) {
           first.alt <- sort(unique(na.omit(pdb$atom$alt)))[1]
-          cat(paste("   PDB has ALT records, taking", first.alt,
-                    "only, rm.alt=TRUE\n"))
+          warning("   PDB has ALT records, taking ", first.alt,
+                    " only, rm.alt=TRUE\n")
           alt.inds <- which((pdb$atom$alt != first.alt))
           if (length(alt.inds) > 0) {
             pdb$atom <- pdb$atom[-alt.inds, ]
@@ -135,7 +144,7 @@ get_pdb_file <- function(pdb_id, filetype = 'cif', rm.insert = FALSE, rm.alt = T
 
       if (rm.insert) {
         if (sum(!is.na(pdb$atom$insert)) > 0) {
-          cat("   PDB has INSERT records, removing, rm.insert=TRUE\n")
+          warning("   PDB has INSERT records, removing, rm.insert=TRUE\n")
           insert.inds <- which(!is.na(pdb$atom$insert))
           pdb$atom <- pdb$atom[-insert.inds, ]
           pdb$xyz <- trim.xyz(pdb$xyz, col.inds = -atom2xyz(insert.inds))
@@ -144,7 +153,7 @@ get_pdb_file <- function(pdb_id, filetype = 'cif', rm.insert = FALSE, rm.alt = T
 
       if (any(duplicated(pdb$atom$eleno))){
 
-         warning("duplicated element numbers ('eleno') detected")
+         warning("   duplicated element numbers ('eleno') detected")
 
       }
 

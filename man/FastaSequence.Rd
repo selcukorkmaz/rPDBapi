@@ -23,5 +23,5 @@ This function constructs a FASTA sequence data structure from given parameters.
 It is typically used to format and store FASTA sequence information.
 }
 \examples{
-fasta_data <- FastaSequence("1XYZ", c("A", "B"), "MVLSPADKT...", "header_info")
+fasta_data <- FastaSequence("1XYZ", c("A", "B"), "MVLSPADKT", "header_info")
 }

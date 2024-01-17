@@ -9,7 +9,7 @@
 #' @param fasta_header A string representing the header of the FASTA sequence.
 #' @return A list representing the FASTA sequence, including entity ID, chains, the sequence itself, and the FASTA header.
 #' @examples
-#' fasta_data <- FastaSequence("1XYZ", c("A", "B"), "MVLSPADKT...", "header_info")
+#' fasta_data <- FastaSequence("1XYZ", c("A", "B"), "MVLSPADKT", "header_info")
 #' @export
 FastaSequence <- function(entity_id, chains, sequence, fasta_header) {
   list(

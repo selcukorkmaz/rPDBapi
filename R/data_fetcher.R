@@ -17,14 +17,6 @@
 #' @export
 data_fetcher <- function(id = NULL, data_type = "ENTRY", properties = NULL, return_as_dataframe = TRUE) {
 
-
-  # # Adjust ID if necessary
-  # if (!is.list(id)) {
-  #   ids <- list(id)
-  # }
-  # lapply(id, validate_id, data_type)
-
-
   properties <- add_property(properties)
   # print(properties)
   json_query <- generate_json_query(id, data_type, properties)

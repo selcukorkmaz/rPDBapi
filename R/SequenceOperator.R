@@ -1,15 +1,3 @@
-#' Raise Error for Unresolvable Sequence Types
-#'
-#' Throws an error when a sequence type cannot be automatically determined.
-#' This function is used within the autoresolve_sequence_type function.
-#'
-#' @param message A descriptive error message to display.
-#' @export
-cannot_autoresolve_sequence_type_error <- function(message) {
-  stop(message)
-}
-
-
 #' Create a Sequence Operator for Sequence-Based Searches
 #'
 #' Constructs a SequenceOperator object for use in sequence-based searches within the RCSB PDB.
@@ -61,8 +49,7 @@ autoresolve_sequence_type <- function(sequence) {
   } else if (all(unique_letters %in% protein_letter_set) && any(unique_letters %in% protein_fingerprint_set)) {
     return("PROTEIN")
   } else {
-    cannot_autoresolve_sequence_type_error(
-      sprintf("Sequence is ambiguous as to its SequenceType: `%s`", sequence)
-    )
+      stop("Sequence is ambiguous as to its SequenceType: ", sequence)
+    
   }
 }

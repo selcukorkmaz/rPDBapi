@@ -67,18 +67,6 @@ ScoredResult <- function(entity_id, score) {
 }
 
 
-#' Exception for Inability to Infer Search Service
-#'
-#' Throws an exception when the search service cannot be inferred from the provided search operator.
-#'
-#' @param message A string containing the error message.
-#' @export
-CannotInferSearchServiceException <- function(message) {
-  stop(paste("CannotInferSearchServiceException:", message))
-}
-
-
-
 #' Infer the Appropriate Search Service
 #'
 #' Determines the appropriate search service for a given search operator in RCSB PDB queries.
@@ -102,7 +90,7 @@ infer_search_service <- function(search_operator) {
   } else if ("ChemicalOperator" %in% class(search_operator)) {
     return(SearchService[["CHEMICAL"]])
   } else {
-    stop("CannotInferSearchServiceException: Cannot infer Search Service for the provided search operator.")
+    stop("Cannot infer Search Service for the provided search operator.")
   }
 
   }

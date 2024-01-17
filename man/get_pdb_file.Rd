@@ -9,7 +9,7 @@ get_pdb_file(
   filetype = "cif",
   rm.insert = FALSE,
   rm.alt = TRUE,
-  compression = FALSE,
+  compression = TRUE,
   save = FALSE,
   path = NULL
 )
@@ -23,16 +23,26 @@ get_pdb_file(
 
 \item{rm.alt}{Logical, if TRUE PDB alternate records are ignored.}
 
-\item{compression}{Logical indicating whether to request the data as a compressed version. Default is FALSE.}
+\item{compression}{Logical indicating whether to request the data as a compressed version. Default is TRUE}
 
 \item{save}{Logical, if TRUE saves PDB file to the desired path.}
 
 \item{path}{The path where the file should be saved. If NULL, the file is saved in a temporary directory.}
 }
 \value{
-The uncompressed string representing the full PDB file or NULL if the request fails.
+Returns a list of class \code{"pdb"} with the following components:
+\item{atom}{ a data.frame containing all atomic coordinate ATOM and
+HETATM data, with a row per ATOM/HETATM and a column per record type.}
+\item{xyz }{ a numeric matrix of class \code{"xyz"} containing the
+ATOM and HETATM coordinate data. }
+\item{calpha }{ logical vector with length equal to \code{nrow(atom)} with TRUE
+values indicating a C-alpha \dQuote{elety}. }
+\item{call }{ the matched call. }
 }
 \description{
 This function downloads PDB files from the RCSB database, supporting different file types and optional compression.
 It warns to consider compression for CIF files for faster download.
+}
+\examples{
+pdb_file <-  get_pdb_file(pdb_id = "4HHB", filetype = "cif")
 }
