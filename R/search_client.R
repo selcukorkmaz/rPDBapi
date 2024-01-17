@@ -79,7 +79,7 @@ infer_search_service <- function(search_operator) {
   if ("DefaultOperator" %in% class(search_operator)) {
     return(SearchService[["BASIC_SEARCH"]])
   }else{
-    if (search_operator$operator %in% TextSearchOperator || is.list(search_operator)) {
+    if (!is.null(search_operator$operator) && (search_operator$operator %in% TextSearchOperator || is.list(search_operator))) {
     return(SearchService[["TEXT"]])
   } else if ("SequenceOperator" %in% class(search_operator)) {
     return(SearchService[["SEQUENCE"]])

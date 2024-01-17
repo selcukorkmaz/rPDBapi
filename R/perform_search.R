@@ -13,9 +13,23 @@
 #' @importFrom httr POST
 #' @importFrom jsonlite toJSON
 #' @examples
+#' ### Search for all entries that mention the word 'ribosome' ###
 #' search_operator = DefaultOperator(value="ribosome")
 #' results = perform_search(search_operator, return_type = "ENTRY")
 #' results
+#'
+#'### Search for structures that match the sequence of an existing RCSB entry ###
+#'fasta_sequence = get_fasta_from_rcsb_entry("6TML", verbosity=TRUE)$sequence
+#'results = perform_search(
+#'  return_type = "ENTRY",
+#'  search_operator = SequenceOperator(
+#'    sequence=fasta_sequence,
+#'    identity_cutoff = 0.99,
+#'    evalue_cutoff = 1000
+#'  ),
+#'  return_with_scores = TRUE
+#')
+#'results
 #'
 #' @export
 perform_search <- function(search_operator, return_type = "ENTRY", request_options = NULL, return_with_scores = FALSE, return_raw_json_dict = FALSE, verbosity = TRUE) {
