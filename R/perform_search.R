@@ -12,6 +12,11 @@
 #' @return The search results, which can vary based on the return type and options specified.
 #' @importFrom httr POST
 #' @importFrom jsonlite toJSON
+#' @examples
+#' search_operator = DefaultOperator(value="ribosome")
+#' results = perform_search(search_operator, return_type = "ENTRY")
+#' results
+#'
 #' @export
 perform_search <- function(search_operator, return_type = "ENTRY", request_options = NULL, return_with_scores = FALSE, return_raw_json_dict = FALSE, verbosity = TRUE) {
   # Assuming perform_search_with_graph is already defined in R
