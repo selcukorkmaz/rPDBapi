@@ -7,7 +7,7 @@
 #' @param filetype The file type: 'pdb', 'cif', 'xml', or 'structfact'. Default is 'pdb'.pdb is the older file format and cif is the newer replacement. xlm is also can be obtained and parsed. structfact retrieves structure factors (only available for certain PDB entries).
 #' @param rm.insert Logical, if TRUE PDB insert records are ignored.
 #' @param rm.alt Logical, if TRUE PDB alternate records are ignored.
-#' @param compression Logical indicating whether to request the data as a compressed version. Default is FALSE.
+#' @param compression Logical indicating whether to request the data as a compressed version. Default is TRUE
 #' @param save Logical, if TRUE saves PDB file to the desired path.
 #' @param path The path where the file should be saved. If NULL, the file is saved in a temporary directory.
 #' @return The uncompressed string representing the full PDB file or NULL if the request fails.
@@ -16,8 +16,9 @@
 #' @importFrom stats na.omit
 #' @importFrom xml2 read_xml as_list
 #' @importFrom bio3d read.pdb read.cif as.xyz trim.xyz atom2xyz atom.select.pdb
+#' @example path.R
 #' @export
-get_pdb_file <- function(pdb_id, filetype = 'cif', rm.insert = FALSE, rm.alt = TRUE, compression = FALSE, save = FALSE,  path = NULL) {
+get_pdb_file <- function(pdb_id, filetype = 'cif', rm.insert = FALSE, rm.alt = TRUE, compression = TRUE, save = FALSE,  path = NULL) {
 
   PDB_DOWNLOAD_BASE_URL <- "https://files.rcsb.org/download/"
 
