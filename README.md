@@ -96,8 +96,8 @@ head(pdb_file$atom)
 For more detailed examples and usage, please refer to the package documentation.
 
 ## Authors
-Selcuk Korkmaz - Trakya University, Department of Biostatistics
-Bilge Eren Yamasan - Trakya University, Department of Biophysics
+* Selcuk Korkmaz - Trakya University, Department of Biostatistics
+* Bilge Eren Yamasan - Trakya University, Department of Biophysics
 
 ## License
 This package is licensed under the MIT License.
