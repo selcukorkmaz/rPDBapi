@@ -20,3 +20,8 @@ This function searches for papers in the Protein Data Bank (PDB) using a specifi
 It retrieves the titles of papers up to a specified maximum number of results.
 The function assumes the presence of `query_search` and `get_info` functions to perform the search and fetch paper details.
 }
+\examples{
+\donttest{
+find_papers("CRISPR")
+}
+}

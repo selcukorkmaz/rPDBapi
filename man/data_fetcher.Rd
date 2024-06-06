@@ -32,3 +32,12 @@ It can return the data either in its original format or as a dataframe.
 The function integrates several steps including validating IDs, generating a JSON query,
 fetching the data, and formatting the response.
 }
+\examples{
+properties <- list(cell = c("length_a", "length_b", "length_c"), exptl = c("method"))
+data_fetcher(
+id = c("4HHB"),
+data_type = "ENTRY",
+properties = properties,
+return_as_dataframe = TRUE
+)
+}

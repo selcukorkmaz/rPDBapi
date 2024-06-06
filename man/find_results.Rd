@@ -10,7 +10,12 @@ find_results(search_term, field = "citation")
 \item{search_term}{A string specifying the term to search for in the PDB.}
 
 \item{field}{A string indicating the specific field to retrieve for each search result.
-Default is "citation".}
+Default is "citation". Other options are 'audit_author', 'cell', 'diffrn', 'diffrn_detector',
+'diffrn_radiation', 'diffrn_source', 'entry', 'exptl', 'exptl_crystal', 'exptl_crystal_grow', 'pdbx_sgproject',
+'pdbx_audit_revision_details', 'pdbx_audit_revision_history', 'pdbx_database_related', 'pdbx_database_status',
+'rcsb_accession_info', 'rcsb_entry_container_identifiers', 'rcsb_entry_info', 'rcsb_primary_citation', 'refine',
+'refine_hist', 'refine_ls_restr', 'reflns', 'reflns_shell', 'software', 'struct', 'struct_keywords', 'symmetry',
+'rcsb_id'}
 }
 \value{
 A named list where each element's name is a PDB ID and its value is the information
@@ -20,4 +25,9 @@ A named list where each element's name is a PDB ID and its value is the informat
 This function performs a search in the Protein Data Bank (PDB) using a provided search term
 and retrieves information for a specified field (e.g., citation) for each search result.
 It relies on `query_search` and `get_info` functions for searching and retrieving detailed information.
+}
+\examples{
+\donttest{
+find_results("crispr", field = "citation")
+}
 }

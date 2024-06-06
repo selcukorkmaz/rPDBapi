@@ -19,3 +19,6 @@ A list of FASTA sequences associated with the provided RCSB entry ID.
 This function fetches FASTA sequences from the RCSB Protein Data Bank (PDB) for a specified entry ID.
 It sends an HTTP request to the PDB and processes the response to extract FASTA sequences.
 }
+\examples{
+get_fasta_from_rcsb_entry(c("4HHB"), verbosity = TRUE)
+}

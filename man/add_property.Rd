@@ -7,9 +7,9 @@
 add_property(property)
 }
 \arguments{
-\item{property}{A Python dictionary where keys are the properties (like 'cell', 'exptl') and
+\item{property}{A dictionary where keys are the properties (like 'cell', 'exptl') and
 values are lists of subproperties (like 'volume', 'angle_beta', 'method').
-Each subproperty should be in character vector format.}
+Each subproperty should be in character vector format. Full list of properties can be found at https://data.rcsb.org/#data-schema.}
 }
 \value{
 A modified list with updated properties where subproperties are merged if a property already exists.
@@ -21,6 +21,6 @@ If a property already exists in the input list, the function merges the subprope
 ensuring each subproperty is unique and maintains character vector format.
 }
 \examples{
-properties <- list(cell = c("volume", "angle_beta"), exptl = c("method"))
+properties <- list(cell = c("length_a", "length_b", "length_c"), exptl = c("method"))
 add_property(properties)
 }

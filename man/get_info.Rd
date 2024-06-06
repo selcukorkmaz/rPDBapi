@@ -20,6 +20,5 @@ This function looks up all information about a given PDB ID using the REST API.
 It handles JSON data and HTTP requests and converts old entry identifiers.
 }
 \examples{
-# Example usage:
-# info <- get_info(pdb_id = c"4hhb")
+get_info(pdb_id = "4HHB")
 }

@@ -34,22 +34,9 @@ This function facilitates searching the RCSB Protein Data Bank (PDB) using a spe
 It allows various configurations like return type, additional request options, and verbosity control.
 }
 \examples{
-### Search for all entries that mention the word 'ribosome' ###
-search_operator = DefaultOperator(value="ribosome")
-results = perform_search(search_operator, return_type = "ENTRY")
+search_operator = InOperator(value=c("Mus musculus", "Homo sapiens"),
+attribute="rcsb_entity_source_organism.taxonomy_lineage.name")
+return_type = "NON_POLYMER_ENTITY"
+results = perform_search(search_operator, return_type)
 results
-
-### Search for structures that match the sequence of an existing RCSB entry ###
-fasta_sequence = get_fasta_from_rcsb_entry("6TML", verbosity=TRUE)$sequence
-results = perform_search(
- return_type = "ENTRY",
- search_operator = SequenceOperator(
-   sequence=fasta_sequence,
-   identity_cutoff = 0.99,
-   evalue_cutoff = 1000
- ),
- return_with_scores = TRUE
-)
-results
-
 }

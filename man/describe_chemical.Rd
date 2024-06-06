@@ -17,5 +17,5 @@ This function retrieves the description of a chemical compound from the RCSB PDB
 }
 \examples{
 chem_desc <- describe_chemical('NAG')
-print(chem_desc$rcsb_chem_comp_descriptor$smiles)
+chem_desc$rcsb_chem_comp_descriptor$smiles
 }

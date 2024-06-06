@@ -13,7 +13,9 @@
 #'                                        sequence_type = "DNA",
 #'                                        pattern_type = "REGEX")
 #' seq_motif_operator
-#' @export
+#'
+#'@export
+
 SeqMotifOperator <- function(pattern, sequence_type, pattern_type) {
 
   res <- list(

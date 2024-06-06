@@ -5,12 +5,12 @@
 #' If a property already exists in the input list, the function merges the subproperties,
 #' ensuring each subproperty is unique and maintains character vector format.
 #'
-#' @param property A Python dictionary where keys are the properties (like 'cell', 'exptl') and
+#' @param property A dictionary where keys are the properties (like 'cell', 'exptl') and
 #' values are lists of subproperties (like 'volume', 'angle_beta', 'method').
-#' Each subproperty should be in character vector format.
+#' Each subproperty should be in character vector format. Full list of properties can be found at https://data.rcsb.org/#data-schema.
 #' @return A modified list with updated properties where subproperties are merged if a property already exists.
 #' @examples
-#' properties <- list(cell = c("volume", "angle_beta"), exptl = c("method"))
+#' properties <- list(cell = c("length_a", "length_b", "length_c"), exptl = c("method"))
 #' add_property(properties)
 #' @export
 

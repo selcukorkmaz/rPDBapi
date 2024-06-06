@@ -14,6 +14,14 @@
 #' @return Depending on the value of 'return_as_dataframe',
 #'   this function returns either a dataframe or data in its original format.
 #' @importFrom purrr flatten
+#' @examples
+#' properties <- list(cell = c("length_a", "length_b", "length_c"), exptl = c("method"))
+#' data_fetcher(
+#' id = c("4HHB"),
+#' data_type = "ENTRY",
+#' properties = properties,
+#' return_as_dataframe = TRUE
+#' )
 #' @export
 data_fetcher <- function(id = NULL, data_type = "ENTRY", properties = NULL, return_as_dataframe = TRUE) {
 

@@ -24,7 +24,8 @@ Supported values include "full_text", "PubmedIdQuery",
 \item{return_type}{A string specifying the type of search result to return.
 Possible values are "entry" (default) and "polymer_entity".}
 
-\item{scan_params}{An optional list containing explicit nested search terms.}
+\item{scan_params}{Additional parameters for the scan, provided as a list.
+This is `NULL` by default and typically only used for advanced queries.}
 
 \item{num_attempts}{An integer specifying the number of attempts to try the query in case of failure.}
 
@@ -37,4 +38,18 @@ Depending on the return_type, it either returns a list of PDB IDs (if "entry")
 \description{
 This function performs a search query against the RCSB Protein Data Bank
 using their REST API. It allows for various types of searches based on the provided parameters.
+}
+\examples{
+# Get a list of PDBs for a specific search term
+pdbs <- query_search("ribosome")
+head(pdbs)
+
+# Search by PubMed ID Number
+pdbs_by_pubmedid <- query_search(search_term = 27499440, query_type = "PubmedIdQuery")
+head(pdbs_by_pubmedid)
+
+# Search by source organism using NCBI TaxId
+pdbs_by_ncbi_taxid <- query_search(search_term = "6239", query_type = "TreeEntityQuery")
+head(pdbs_by_ncbi_taxid)
+
 }

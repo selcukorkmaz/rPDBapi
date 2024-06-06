@@ -10,19 +10,41 @@
 #' @importFrom httr GET http_status
 #' @importFrom jsonlite fromJSON
 #' @examples
-#' # Example usage:
-#' # info <- get_info(pdb_id = c"4hhb")
+#' get_info(pdb_id = "4HHB")
 #' @export
 get_info <- function(pdb_id, url_root = 'https://data.rcsb.org/rest/v1/core/entry/') {
   pdb_id <- gsub(":", "/", pdb_id)  # Replace old entry identifier
   url <- paste0(url_root, pdb_id)
-  response <- GET(url)
 
-  if (http_status(response)$category != "Success") {
-    stop(content(response)$message)
+  response <- tryCatch(
+    {
+      GET(url)
+    },
+    error = function(e) {
+      warning("Failed to retrieve data: ", e$message)
+      return(NULL)
+    }
+  )
+
+  if (is.null(response)) {
+    return(NULL)
   }
 
-  out <- fromJSON(content(response, "text"))
+  if (http_status(response)$category != "Success") {
+    warning("Request failed with: ", http_status(response)$reason)
+    return(NULL)
+  }
+
+  out <- tryCatch(
+    {
+      fromJSON(content(response, "text", encoding = "UTF-8"))
+    },
+    error = function(e) {
+      warning("Failed to parse JSON response: ", e$message)
+      return(NULL)
+    }
+  )
+
   return(out)
 }
 

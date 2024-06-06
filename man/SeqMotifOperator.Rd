@@ -25,4 +25,5 @@ seq_motif_operator <- SeqMotifOperator(pattern = "A[TU]G",
                                        sequence_type = "DNA",
                                        pattern_type = "REGEX")
 seq_motif_operator
+
 }

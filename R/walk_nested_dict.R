@@ -13,7 +13,6 @@
 #' @return A list of values associated with the term found in the nested dictionary.
 #'   Returns NULL if the term is not found or if maximum recursion depth is exceeded.
 #' @importFrom methods is
-#' @export
 
 walk_nested_dict <- function(my_result, term, outputs = list(), depth = 0, maxdepth = 25) {
   if (depth > maxdepth) {

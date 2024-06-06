@@ -50,6 +50,6 @@ autoresolve_sequence_type <- function(sequence) {
     return("PROTEIN")
   } else {
       stop("Sequence is ambiguous as to its SequenceType: ", sequence)
-    
+
   }
 }
