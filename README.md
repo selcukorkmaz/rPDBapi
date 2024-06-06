@@ -9,7 +9,7 @@
 * **Custom Queries:** Streamlines the process of crafting custom queries for efficient data retrieval.
 * **Advanced Search Capabilities:** Includes specialized search functions for PubMed IDs, organisms, experimental methods, protein structure similarities, and more.
 * **Data Retrieval:** Facilitates downloading of PDB files in various formats and extraction of FASTA sequences.
-* **Integration with R: Provides functions for data manipulation and analysis directly within R, enhancing research workflows.
+* **Integration with R:** Provides functions for data manipulation and analysis directly within R, enhancing research workflows.
 
 
 ## Installation
