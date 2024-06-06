@@ -18,7 +18,7 @@
 #' @return Depending on the return_type, it either returns a list of PDB IDs (if "entry")
 #'         or the full response from the API.
 #'
-#' @importFrom httr POST content
+#' @importFrom httr POST content content_type
 #' @importFrom jsonlite toJSON fromJSON
 #'
 #' @examples
