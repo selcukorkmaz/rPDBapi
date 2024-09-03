@@ -2,18 +2,24 @@
 % Please edit documentation in R/search_client.R
 \name{QueryNode}
 \alias{QueryNode}
-\title{Create a Query Node Object}
+\title{Create a Query Node for RCSB PDB Searches}
 \usage{
 QueryNode(search_operator, logical_operator = NULL)
 }
 \arguments{
-\item{search_operator}{A search operator or group object.}
+\item{search_operator}{A search operator or group object. This defines the criteria for the search.}
 
-\item{logical_operator}{A string specifying the logical operator, default is NULL. Used only if the search_operator is a group.}
+\item{logical_operator}{A string specifying the logical operator to combine multiple queries. Default is `NULL`. This is used only if the search_operator is a group.}
 }
 \value{
-A list representing the query node.
+A list representing the query node, ready to be included in a larger query structure.
 }
 \description{
-Constructs a query node, which can be a terminal node or a grouped node, for complex RCSB PDB searches. This function is used to structure queries for the search system.
+The `QueryNode` function constructs a query node, which can be either a terminal node (for a simple query) or a grouped node (for complex queries).
+This function is crucial for structuring queries that will be sent to the RCSB PDB search system.
+}
+\examples{
+\donttest{
+node <- QueryNode(search_operator = DefaultOperator("some_value"))
+}
 }

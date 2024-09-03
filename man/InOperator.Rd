@@ -7,13 +7,24 @@
 InOperator(attribute, value)
 }
 \arguments{
-\item{attribute}{The attribute to be evaluated.}
+\item{attribute}{The attribute to be evaluated. This should be the field within the RCSB PDB
+that you want to search against.}
 
-\item{value}{The set of values to include in the search.}
+\item{value}{The set of values to include in the search. This should be a vector of possible values
+that the attribute can match.}
 }
 \value{
-An object of class 'InOperator'.
+An object of class `InOperator` that can be used in search queries to retrieve entries
+        where the attribute matches any of the specified values.
 }
 \description{
-Constructs an InOperator object for search operations where the attribute value must be within a specified set.
+Constructs an `InOperator` object for search operations where the attribute value must be within a specified set.
+This operator is useful when the search criteria require the attribute to match one of several possible values.
+It can handle multiple potential matches and is ideal for scenarios where multiple values are acceptable.
+}
+\examples{
+# Search for entries where the attribute matches one of several values
+operator <- InOperator(attribute = "rcsb_entity_source_organism.taxonomy_lineage.name",
+                       value = c("Homo sapiens", "Mus musculus"))
+print(operator)
 }

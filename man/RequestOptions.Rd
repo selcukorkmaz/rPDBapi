@@ -2,7 +2,7 @@
 % Please edit documentation in R/search_client.R
 \name{RequestOptions}
 \alias{RequestOptions}
-\title{Define Options for Search Requests}
+\title{Define Request Options for RCSB PDB Search Queries}
 \usage{
 RequestOptions(
   result_start_index = NULL,
@@ -12,17 +12,23 @@ RequestOptions(
 )
 }
 \arguments{
-\item{result_start_index}{An integer specifying the starting index for result pagination, default is NULL.}
+\item{result_start_index}{An integer specifying the starting index for result pagination. If `NULL`, pagination is not applied.}
 
-\item{num_results}{An integer specifying the number of results to return, default is NULL.}
+\item{num_results}{An integer specifying the number of results to return. If `NULL`, the default number of results is returned.}
 
-\item{sort_by}{A string indicating the attribute to sort by, default is 'score'.}
+\item{sort_by}{A string indicating the attribute to sort the results by. The default value is 'score', which ranks results based on relevance.}
 
-\item{desc}{A boolean indicating whether sorting should be in descending order, default is TRUE.}
+\item{desc}{A boolean indicating whether the sorting should be in descending order. Default is `TRUE`.}
 }
 \value{
-A list of request options.
+A list of request options that can be included in a search query to control the results.
 }
 \description{
-Sets various options for RCSB PDB search requests, such as pagination and sorting.
+The `RequestOptions` function sets various options for search requests to the RCSB PDB, such as pagination and sorting preferences.
+These options help control the volume of search results returned and the order in which they are presented.
+}
+\examples{
+\donttest{
+options <- RequestOptions(result_start_index = 0, num_results = 100, sort_by = "score", desc = TRUE)
+}
 }

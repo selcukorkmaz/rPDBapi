@@ -1,3 +1,8 @@
+#' Import testthat Package
+#' @noRd
+#' @import testthat
+NULL
+
 FASTA_BASE_URL <- "https://www.rcsb.org/fasta/entry/"
 PDB_DOWNLOAD_BASE_URL <- "https://files.rcsb.org/download/"
 RSCB_GRAPHQL_URL <- "https://data.rcsb.org/graphql?query="

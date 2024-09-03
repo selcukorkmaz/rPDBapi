@@ -2,19 +2,20 @@
 % Please edit documentation in R/search_client.R
 \name{QueryGroup}
 \alias{QueryGroup}
-\title{Create a Grouped Query Object}
+\title{Create a Grouped Query Object for RCSB PDB Searches}
 \usage{
 QueryGroup(queries, logical_operator)
 }
 \arguments{
-\item{queries}{A list of query objects to be grouped together.}
+\item{queries}{A list of query objects to be grouped together. Each query object can be either a simple query or another grouped query.}
 
-\item{logical_operator}{A string specifying the logical operator (e.g., 'AND', 'OR') to combine the queries.}
+\item{logical_operator}{A string specifying the logical operator to combine the queries. Common values are 'AND' and 'OR', but other logical operators may also be supported.}
 }
 \value{
-A list representing the grouped query object.
+A list representing the grouped query object, which can be passed to search functions for execution.
 }
 \description{
-Constructs a grouped query object for performing complex searches in RCSB PDB.
-It groups multiple query objects using a specified logical operator.
+The `QueryGroup` function constructs a grouped query object that allows users to perform complex searches in the RCSB Protein Data Bank (PDB).
+This function is particularly useful when multiple query objects need to be combined using logical operators like 'AND' or 'OR'.
+The resulting grouped query can be used in advanced search operations to filter or combine results based on multiple criteria.
 }

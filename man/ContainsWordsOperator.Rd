@@ -7,13 +7,24 @@
 ContainsWordsOperator(attribute, value)
 }
 \arguments{
-\item{attribute}{The attribute to be evaluated.}
+\item{attribute}{The attribute to be evaluated. This should be the text field within the RCSB PDB
+that you want to search against.}
 
-\item{value}{The words to search for in the attribute.}
+\item{value}{The words to search for in the attribute. This can be a single word or a set of words,
+and the search will return entries containing any of these words in the specified attribute.}
 }
 \value{
-An object of class 'ContainsWordsOperator'.
+An object of class `ContainsWordsOperator` that can be used in search queries to retrieve entries
+        where the attribute contains the specified words.
 }
 \description{
-Constructs a ContainsWordsOperator object for search operations that look for attributes containing certain words.
+Constructs a `ContainsWordsOperator` object for search operations that look for attributes containing specific words.
+This operator is particularly useful for text-based searches where the goal is to find entries that include
+particular keywords or phrases within a specified attribute.
+}
+\examples{
+# Search for entries containing specific words in an attribute
+operator <- ContainsWordsOperator(attribute = "rcsb_primary_citation.title",
+                                  value = "crystal structure")
+print(operator)
 }

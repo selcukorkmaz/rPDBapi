@@ -1,35 +1,97 @@
 #' Fetch RCSB PDB Data Based on Specified Criteria
 #'
-#' This function fetches data based on a given identifier (ID), data type, and a set of properties.
-#' It can return the data either in its original format or as a dataframe.
-#' The function integrates several steps including validating IDs, generating a JSON query,
-#' fetching the data, and formatting the response.
+#' The `data_fetcher` function provides a flexible way to access data from the RCSB Protein Data Bank (PDB). By specifying an identifier, data type, and a set of properties, users can tailor the data retrieval process to meet their specific research needs. The function integrates several steps, including validating IDs, generating a JSON query, fetching the data, and formatting the response.
 #'
-#' @param id An identifier or a list of identifiers for the data to be fetched.
-#' @param data_type A string specifying the type of data to fetch.
-#'   Default is "ENTRY".
-#' @param properties A list or dictionary of properties to be included in the data fetching process.
-#' @param return_as_dataframe A boolean indicating whether to return the response as a dataframe.
-#'   Default is TRUE.
-#' @return Depending on the value of 'return_as_dataframe',
-#'   this function returns either a dataframe or data in its original format.
+#' @param id A single identifier or a list of identifiers for the data to be fetched. These IDs correspond to the entries, assemblies, polymer entities, or other entities within the RCSB PDB. The ID must match the data type you are querying (e.g., PDB ID for entries, assembly ID for assemblies).
+#'
+#' @param data_type A string specifying the type of data to fetch. The available options for \code{data_type} include:
+#' \describe{
+#'   \item{\code{"ENTRY"}}{Fetches data related to PDB entries. This is the default option and returns basic entry-level information.}
+#'   \item{\code{"ASSEMBLY"}}{Fetches data related to biological assemblies. The IDs should be formatted as \code{"PDB_ID-ASSEMBLY_ID"}.}
+#'   \item{\code{"POLYMER_ENTITY"}}{Fetches data related to polymeric molecular entities, such as protein chains.}
+#'   \item{\code{"BRANCHED_ENTITY"}}{Fetches data related to branched entities, such as carbohydrates or other branched molecules.}
+#'   \item{\code{"NONPOLYMER_ENTITY"}}{Fetches data related to non-polymeric entities, such as ligands, cofactors, or small molecules.}
+#'   \item{\code{"POLYMER_ENTITY_INSTANCE"}}{Fetches data related to specific instances of polymeric entities, also known as chains.}
+#'   \item{\code{"BRANCHED_ENTITY_INSTANCE"}}{Fetches data related to specific instances of branched entities.}
+#'   \item{\code{"NONPOLYMER_ENTITY_INSTANCE"}}{Fetches data related to specific instances of non-polymeric entities.}
+#'   \item{\code{"CHEMICAL_COMPONENT"}}{Fetches data related to chemical components, such as individual atoms or molecular fragments.}
+#' }
+#' Each \code{data_type} corresponds to a specific hierarchy level within the PDB data structure, and selecting the appropriate type ensures that you retrieve relevant and accurate data.
+#'
+#' @param properties A list or dictionary of properties to be included in the data fetching process. The properties should match the data type you are querying. For example, if you are fetching \code{POLYMER_ENTITY} data, you might specify properties such as \code{"rcsb_entity_source_organism"} or \code{"rcsb_cluster_membership"}.
+#' \describe{
+#'   \item{\code{"rcsb_entry_info"}}{General entry-level information such as molecular weight or deposition date.}
+#'   \item{\code{"exptl"}}{Experimental method details, such as X-ray diffraction or NMR spectroscopy.}
+#'   \item{\code{"rcsb_entity_source_organism"}}{Taxonomy and source organism information for polymer entities.}
+#'   \item{\code{"pdbx_entity_branch"}}{Details specific to branched entities, such as carbohydrate type.}
+#'   \item{\code{"rcsb_assembly_info"}}{Information related to biological assemblies, such as polymer entity counts.}
+#' }
+#' The \code{properties} argument allows users to customize the data they retrieve by specifying exactly which attributes of the data type they are interested in. It is important to match the properties to the correct data type to ensure accurate and meaningful results.
+#'
+#' @param return_as_dataframe A boolean indicating whether to return the response as a dataframe. If \code{TRUE}, the data is returned in a structured dataframe format, which is convenient for analysis and manipulation in R. If \code{FALSE}, the data is returned in its original format, which may be a nested list or JSON-like structure. Default is \code{TRUE}.
+#'
+#' @return Depending on the value of \code{return_as_dataframe}, this function returns either a dataframe or the raw data in its original format. The dataframe format is particularly useful for further data analysis and visualization within R, while the raw format may be preferred for more complex or custom data processing tasks.
+#'
+#' @details The `data_fetcher` function is particularly useful for researchers who need to access and analyze specific subsets of PDB data. By providing a list of IDs and the corresponding data type, users can retrieve only the information relevant to their study, reducing the need to manually filter or process large datasets. The function also supports fetching multiple properties simultaneously, allowing for a more comprehensive data retrieval process.
+#'
+#' @seealso The \href{https://data.rcsb.org/#data-schema}{RCSB PDB Data Schema} provides detailed documentation on the properties available for each data type. Users are encouraged to refer to this resource when selecting properties for their queries.
+#'
 #' @importFrom purrr flatten
 #' @examples
+#' # Example 1: Fetching basic entry information
 #' properties <- list(cell = c("length_a", "length_b", "length_c"), exptl = c("method"))
 #' data_fetcher(
-#' id = c("4HHB"),
-#' data_type = "ENTRY",
-#' properties = properties,
-#' return_as_dataframe = TRUE
+#'   id = c("4HHB"),
+#'   data_type = "ENTRY",
+#'   properties = properties,
+#'   return_as_dataframe = TRUE
 #' )
+#'
+#' # Example 2: Fetching polymer entity data
+#' properties <- list(
+#'   rcsb_entity_source_organism = c("ncbi_taxonomy_id", "ncbi_scientific_name"),
+#'   rcsb_cluster_membership = c("cluster_id", "identity")
+#' )
+#' data_fetcher(
+#'   id = c("4HHB_1", "12CA_1"),
+#'   data_type = "POLYMER_ENTITY",
+#'   properties = properties,
+#'   return_as_dataframe = TRUE
+#' )
+#'
+#' # Example 3: Fetching non-polymer entity data
+#' properties <- list(
+#'   rcsb_nonpolymer_entity = c("details", "formula_weight", "pdbx_description"),
+#'   rcsb_nonpolymer_entity_container_identifiers = c("chem_ref_def_id")
+#' )
+#' data_fetcher(
+#'   id = c("3PQR_5", "3PQR_6"),
+#'   data_type = "NONPOLYMER_ENTITY",
+#'   properties = properties,
+#'   return_as_dataframe = TRUE
+#' )
+#'
+#' # Example 4: Fetching chemical component data
+#' properties <- list(
+#'   rcsb_id = list(),
+#'   chem_comp = list("type", "formula_weight", "name", "formula"),
+#'   rcsb_chem_comp_info = list("initial_release_date")
+#' )
+#' data_fetcher(
+#'   id = c("NAG", "EBW"),
+#'   data_type = "CHEMICAL_COMPONENT",
+#'   properties = properties,
+#'   return_as_dataframe = TRUE
+#' )
+#'
 #' @export
 data_fetcher <- function(id = NULL, data_type = "ENTRY", properties = NULL, return_as_dataframe = TRUE) {
 
-  properties <- add_property(properties)
+  # properties <- add_property(properties)
   # print(properties)
   json_query <- generate_json_query(id, data_type, properties)
   # print(json_query)
-  response <- fetch_data(json_query, data_type, id)
+  response <- fetch_data(json_query = json_query, data_type = data_type, ids = id)
   # print(response)
 
   if(return_as_dataframe){

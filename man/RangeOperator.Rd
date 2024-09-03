@@ -14,21 +14,31 @@ RangeOperator(
 )
 }
 \arguments{
-\item{attribute}{The attribute to be evaluated within a range.}
+\item{attribute}{The attribute to be evaluated within a range. This should be the numeric or date field
+within the RCSB PDB that you want to search against.}
 
-\item{from_value}{The starting value of the range.}
+\item{from_value}{The starting value of the range. This is the lower bound of the range.}
 
-\item{to_value}{The ending value of the range.}
+\item{to_value}{The ending value of the range. This is the upper bound of the range.}
 
-\item{include_lower}{Boolean to include the lower bound in the range.}
+\item{include_lower}{Boolean indicating whether to include the lower bound in the range. Default is TRUE.}
 
-\item{include_upper}{Boolean to include the upper bound in the range.}
+\item{include_upper}{Boolean indicating whether to include the upper bound in the range. Default is TRUE.}
 
-\item{negation}{Boolean to negate the range condition.}
+\item{negation}{Boolean indicating whether to negate the range condition. Default is FALSE.}
 }
 \value{
-An object of class 'RangeOperator'.
+An object of class `RangeOperator` that can be used in search queries to retrieve entries
+        where the attribute falls within the specified range.
 }
 \description{
-Constructs a RangeOperator object for search operations that specify a range for attribute values.
+Constructs a `RangeOperator` object for search operations that specify a range for attribute values.
+This operator is particularly useful for filtering results based on numeric or date ranges,
+such as finding entries with resolution between specific values or dates within a certain range.
+}
+\examples{
+# Search for entries within a specific range of resolution
+operator <- RangeOperator(attribute = "rcsb_entry_info.resolution_combined",
+                          from_value = 1.5, to_value = 2.5)
+print(operator)
 }

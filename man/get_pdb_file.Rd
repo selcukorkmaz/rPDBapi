@@ -2,7 +2,7 @@
 % Please edit documentation in R/get_pdb_file.R
 \name{get_pdb_file}
 \alias{get_pdb_file}
-\title{Download PDB Files from RCSB Database}
+\title{Download and Process PDB Files from the RCSB Database}
 \usage{
 get_pdb_file(
   pdb_id,
@@ -11,38 +11,73 @@ get_pdb_file(
   rm.alt = TRUE,
   compression = TRUE,
   save = FALSE,
-  path = NULL
+  path = NULL,
+  verbosity = TRUE
 )
 }
 \arguments{
-\item{pdb_id}{A 4-character string specifying a PDB entry of interest.}
+\item{pdb_id}{A 4-character string specifying the PDB entry of interest (e.g., "1XYZ"). This identifier uniquely represents
+a macromolecular structure within the PDB database.}
 
-\item{filetype}{The file type: 'pdb', 'cif', 'xml', or 'structfact'. Default is 'pdb'.pdb is the older file format and cif is the newer replacement. xlm is also can be obtained and parsed. structfact retrieves structure factors (only available for certain PDB entries).}
+\item{filetype}{A string specifying the format of the file to be downloaded. The default is 'cif'. Supported file types include:
+\describe{
+  \item{'pdb'}{The older PDB file format, which provides atomic coordinates and metadata.}
+  \item{'cif'}{The Crystallographic Information File (CIF) format, which is a newer standard replacing PDB files.}
+  \item{'xml'}{An XML format file, providing structured data that can be easily parsed for various applications.}
+  \item{'structfact'}{Structure factor files in CIF format, available for certain PDB entries, containing experimental
+  data used to determine the structure.}
+}}
 
-\item{rm.insert}{Logical, if TRUE PDB insert records are ignored.}
+\item{rm.insert}{Logical flag indicating whether to ignore PDB insertion codes. Default is FALSE. If TRUE, records with insertion
+codes will be removed from the final data.}
 
-\item{rm.alt}{Logical, if TRUE PDB alternate records are ignored.}
+\item{rm.alt}{Logical flag indicating whether to ignore alternate location indicators (ALT) in PDB files. Default is TRUE. If
+TRUE, only the first alternate location is kept, and others are removed.}
 
-\item{compression}{Logical indicating whether to request the data as a compressed version. Default is TRUE}
+\item{compression}{Logical flag indicating whether to download the file in a compressed format (e.g., .gz). Default is TRUE,
+which is recommended for faster downloads, especially for CIF files.}
 
-\item{save}{Logical, if TRUE saves PDB file to the desired path.}
+\item{save}{Logical flag indicating whether to save the downloaded file to a specified directory. Default is FALSE, which means
+the file is processed and optionally saved, but not retained after processing unless specified.}
 
-\item{path}{The path where the file should be saved. If NULL, the file is saved in a temporary directory.}
+\item{path}{A string specifying the directory where the downloaded file should be saved. If NULL, the file is saved in a
+temporary directory. If `save` is TRUE, this path is required.}
+
+\item{verbosity}{A boolean flag indicating whether to print status messages during the function execution.}
 }
 \value{
-Returns a list of class \code{"pdb"} with the following components:
-\item{atom}{ a data.frame containing all atomic coordinate ATOM and
-HETATM data, with a row per ATOM/HETATM and a column per record type.}
-\item{xyz }{ a numeric matrix of class \code{"xyz"} containing the
-ATOM and HETATM coordinate data. }
-\item{calpha }{ logical vector with length equal to \code{nrow(atom)} with TRUE
-values indicating a C-alpha \dQuote{elety}. }
-\item{call }{ the matched call. }
+A list of class \code{"pdb"} containing the following components:
+  \describe{
+    \item{\code{atom}}{A data frame containing atomic coordinate data (ATOM and HETATM records). Each row corresponds to an
+    atom, and each column to a specific record type (e.g., element, residue, chain).}
+    \item{\code{xyz}}{A numeric matrix of class \code{"xyz"} containing the atomic coordinates from the ATOM and HETATM records.}
+    \item{\code{calpha}}{A logical vector indicating whether each atom is a C-alpha atom (TRUE) or not (FALSE).}
+    \item{\code{call}}{The matched call, storing the function call for reference.}
+    \item{\code{path}}{The file path where the file was saved, if `save` was TRUE.}
+  }
+  The function handles errors and warnings for various edge cases, such as unsupported file types, failed downloads, or issues
+  with reading the file.
 }
 \description{
-This function downloads PDB files from the RCSB database, supporting different file types and optional compression.
-It warns to consider compression for CIF files for faster download.
+The `get_pdb_file` function is a versatile tool designed to download Protein Data Bank (PDB) files from the RCSB database.
+It supports various file formats such as 'pdb', 'cif', 'xml', and 'structfact', with options for file compression and handling
+alternate locations (ALT) and insertion codes (INSERT) in PDB files. This function also provides the flexibility to save
+the downloaded files to a specified directory or to a temporary directory for immediate use.
+}
+\details{
+The `get_pdb_file` function is an essential tool for structural biologists and bioinformaticians who need to download and
+process PDB files for further analysis. By providing options to handle alternate locations and insertion codes, this function
+ensures that the data is clean and ready for downstream applications. Additionally, the ability to save files locally or
+work with them in a temporary directory provides flexibility for various workflows. Error handling and informative messages
+are included to guide the user in case of issues with file retrieval or processing.
 }
 \examples{
-pdb_file <-  get_pdb_file(pdb_id = "4HHB", filetype = "cif")
+\donttest{
+  # Download a CIF file and process it without saving
+  pdb_file <- get_pdb_file(pdb_id = "4HHB", filetype = "cif")
+
+  # Download a PDB file, save it, and remove alternate location records
+  pdb_file <- get_pdb_file(pdb_id = "4HHB", filetype = "pdb", save = TRUE, path = tempdir())
+
+}
 }

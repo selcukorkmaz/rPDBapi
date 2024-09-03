@@ -7,19 +7,23 @@
 search_graphql(graphql_json_query)
 }
 \arguments{
-\item{graphql_json_query}{A list containing the GraphQL query in JSON format.}
+\item{graphql_json_query}{A list containing the GraphQL query formatted as JSON. This list should include the `query` key with a value that represents the GraphQL query string.
+The query string can specify various elements to retrieve, such as entry IDs, experimental methods, cell dimensions, etc.}
 }
 \value{
-The parsed content of the response from the PDB.
+A parsed list containing the content of the response from the RCSB PDB, formatted as an R object. If the request fails, the function stops with an error message.
 }
 \description{
-Executes a GraphQL query against the RCSB Protein Data Bank (PDB).
-It sends the query in JSON format and handles the HTTP response, including error checking.
+The `search_graphql` function sends a GraphQL query to the RCSB Protein Data Bank (PDB) using the provided JSON query format.
+This function handles the HTTP request, sends the query, and processes the response, including error handling to ensure that the query executes successfully.
 }
 \examples{
+\donttest{
+# Example of a GraphQL query to fetch cell volume and experimental method for specific PDB entries
 graphql_json_query <- list(query = "{entries(entry_ids:
                           [\"4LZA\", \"5RU3\"]){cell {volume, angle_beta},
                           exptl {method}}}")
 result <- search_graphql(graphql_json_query)
-result
+print(result)
+}
 }

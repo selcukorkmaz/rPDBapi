@@ -7,21 +7,41 @@
 find_papers(search_term, max_results = 10)
 }
 \arguments{
-\item{search_term}{A string specifying the term to search for in the PDB.}
+\item{search_term}{A string specifying the term to search for in the PDB. This term can relate to any aspect of
+the PDB entries, such as keywords, molecular functions, or specific proteins (e.g., "CRISPR").}
 
-\item{max_results}{An integer indicating the maximum number of paper titles to retrieve.
-Defaults to 10.}
+\item{max_results}{An integer indicating the maximum number of paper titles to retrieve. Defaults to 10.
+The function will retrieve the titles for the first `max_results` PDB entries returned by the search.}
 }
 \value{
 A named list where each element's name is a PDB ID and its value is the title of the corresponding paper.
+  If no papers are found or an error occurs, the function returns an empty list with warnings or error messages
+  to help diagnose the issue.
 }
 \description{
-This function searches for papers in the Protein Data Bank (PDB) using a specified search term.
-It retrieves the titles of papers up to a specified maximum number of results.
-The function assumes the presence of `query_search` and `get_info` functions to perform the search and fetch paper details.
+This function searches the Protein Data Bank (PDB) for scholarly articles related to a specified search term.
+It retrieves the titles of up to a specified maximum number of papers associated with PDB entries.
+The function relies on `query_search` to perform the initial search and `get_info` to fetch detailed information
+for each PDB entry, including the citation titles.
+}
+\details{
+This function is useful for researchers who want to quickly find relevant literature associated with specific
+PDB entries. The process involves two main steps:
+\enumerate{
+  \item **Search Query**: The function uses `query_search` to find PDB entries matching the search term.
+  \item **Fetching Paper Titles**: For each PDB ID returned by the search, `get_info` is used to retrieve
+  detailed information, including the titles of any associated citations.
+}
+
+The function includes robust error handling to manage cases where the search term does not return any results,
+or where there are issues retrieving details for specific PDB entries. Warnings are provided if no citations are
+found for a given PDB ID or if other issues are encountered.
 }
 \examples{
 \donttest{
-find_papers("CRISPR")
+# Find papers related to CRISPR and retrieve up to 5 paper titles
+crispr_papers <- find_papers("CRISPR", max_results = 5)
+print(crispr_papers)
+
 }
 }

@@ -7,11 +7,25 @@
 autoresolve_sequence_type(sequence)
 }
 \arguments{
-\item{sequence}{A string representing the sequence to be analyzed.}
+\item{sequence}{A string representing the nucleotide or protein sequence to be analyzed. The sequence should be composed of characters corresponding to standard IUPAC codes.}
 }
 \value{
-A string indicating the resolved sequence type.
+A string indicating the resolved sequence type: 'DNA', 'RNA', or 'PROTEIN'.
+  If the sequence contains ambiguous characters or does not fit clearly into one of these categories, an error is thrown.
 }
 \description{
-This function determines the type of a given sequence (DNA, RNA, or PROTEIN) based on its characters.
+The `autoresolve_sequence_type` function analyzes the characters in a given sequence to determine whether it is a DNA, RNA, or protein sequence.
+The function uses standard IUPAC nucleotide and amino acid codes to classify the sequence based on its composition.
+}
+\examples{
+# Example of determining the sequence type for a DNA sequence
+seq_type_dna <- autoresolve_sequence_type("ATGCGTACGTAGC")
+print(seq_type_dna)  # Should return "DNA"
+
+# Example of determining the sequence type for a protein sequence
+seq_type_protein <- autoresolve_sequence_type("MVLSPADKTNVKAAW")
+print(seq_type_protein)  # Should return "PROTEIN"
+
+# Example of an ambiguous sequence that causes an error
+# autoresolve_sequence_type("ATGB")  # Should throw an error due to ambiguity
 }

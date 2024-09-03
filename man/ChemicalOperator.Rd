@@ -2,19 +2,42 @@
 % Please edit documentation in R/ChemicalOperator.R
 \name{ChemicalOperator}
 \alias{ChemicalOperator}
-\title{Chemical Operator for SMILES/InChI Searches}
+\title{Create a Chemical Search Operator for SMILES/InChI Descriptors}
 \usage{
 ChemicalOperator(descriptor, matching_criterion = "graph-strict")
 }
 \arguments{
-\item{descriptor}{A valid SMILES or InChI string.}
+\item{descriptor}{A string representing the chemical structure in either SMILES or InChI format. The function automatically detects the format based on the input string. If the descriptor starts with "InChI=", it is treated as an InChI string; otherwise, it is assumed to be a SMILES string.}
 
-\item{matching_criterion}{The criterion for matching, one of the values from DescriptorMatchingCriterion.
-Defaults to "graph-strict".}
+\item{matching_criterion}{A string specifying the criterion for matching the chemical structure. The matching criterion determines how closely the input descriptor should match the structures in the PDB database. The possible values are predefined in the `DescriptorMatchingCriterion` list, with "graph-strict" being the default. Other options may include "graph-exact," "graph-relaxed," and "fingerprint-similarity," among others.}
 }
 \value{
-A list representing a chemical operator.
+The function returns a list structured as a `ChemicalOperator` object. This object contains the input descriptor, the type of descriptor (SMILES or InChI), and the specified matching criterion. The resulting `ChemicalOperator` object can be used in subsequent functions that perform chemical searches in the PDB database.
 }
 \description{
-Creates an object representing a chemical search operator using SMILES or InChI descriptors.
+The `ChemicalOperator` function constructs an operator object used for chemical searches within the RCSB Protein Data Bank (PDB). This function is particularly useful for querying the PDB database using chemical structure descriptors, such as SMILES (Simplified Molecular Input Line Entry System) or InChI (International Chemical Identifier) strings. The function supports various matching criteria to tailor the search results according to specific needs.
+}
+\details{
+The `ChemicalOperator` function is designed for advanced users who need to search for chemical structures in the PDB using specific descriptors. The function allows flexibility in defining the level of matching precision, making it suitable for both exact and fuzzy searches.
+
+The matching criteria provided by the `matching_criterion` argument allow users to control the strictness of the search. For example:
+\describe{
+  \item{graph-strict}{Matches chemical structures based on atom type, bond order, and chirality, with strict graph matching.}
+  \item{graph-relaxed}{Allows for a more relaxed matching by ignoring certain structural details.}
+  \item{fingerprint-similarity}{Uses molecular fingerprints to find similar structures based on a similarity threshold.}
+}
+}
+\examples{
+# Example 1: Search for a chemical using a SMILES string
+smiles_operator <- ChemicalOperator(descriptor = "C1=CC=CC=C1", matching_criterion = "graph-strict")
+smiles_operator
+
+# Example 2: Search using an InChI string with a relaxed matching criterion
+inchi_operator <- ChemicalOperator(descriptor = "InChI=1S/C7H8O/c1-6-2-4-7(9)5-3-6/h2-5,9H,1H3",
+                                    matching_criterion = "graph-relaxed")
+inchi_operator
+
+}
+\seealso{
+`perform_search` for executing a search using the created `ChemicalOperator`.
 }

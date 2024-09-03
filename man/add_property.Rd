@@ -7,20 +7,44 @@
 add_property(property)
 }
 \arguments{
-\item{property}{A dictionary where keys are the properties (like 'cell', 'exptl') and
-values are lists of subproperties (like 'volume', 'angle_beta', 'method').
-Each subproperty should be in character vector format. Full list of properties can be found at https://data.rcsb.org/#data-schema.}
+\item{property}{A list where each element corresponds to a property category. The names of the list elements are the properties, and their values are character vectors containing the subproperties.
+Each subproperty should be provided as a character vector. The full list of available properties and their descriptions can be found at \url{https://data.rcsb.org/#data-schema}.
+
+For example, a `property` list might look like:
+\describe{
+  \item{cell}{A character vector of subproperties like \code{"length_a"}, \code{"length_b"}, \code{"length_c"}.}
+  \item{exptl}{A character vector of subproperties like \code{"method"}.}
+}}
 }
 \value{
-A modified list with updated properties where subproperties are merged if a property already exists.
+A modified list that consolidates the input properties. If a property already exists in the input list, its subproperties are merged, removing any duplicates.
 }
 \description{
-This function is designed for handling properties related to fetching data from the Protein Data Bank (PDB).
-It takes a dictionary, where keys represent properties and values are lists of subproperties.
-If a property already exists in the input list, the function merges the subproperties,
-ensuring each subproperty is unique and maintains character vector format.
+This function facilitates the management of properties and subproperties required for data retrieval from the Protein Data Bank (PDB).
+It accepts a list of properties where each key represents a property category (e.g., 'cell', 'exptl'), and the corresponding value is a character vector of subproperties (e.g., 'volume', 'method').
+The function ensures that if a property already exists, its subproperties are merged without duplication, guaranteeing that each subproperty remains unique.
+}
+\details{
+The `add_property` function is particularly useful when users need to dynamically build or update a list of properties required for complex queries in the PDB. By automatically handling duplicate entries, this function streamlines the process of constructing property lists, which can then be used in subsequent data retrieval operations.
+
+The function operates as follows:
+\enumerate{
+  \item Checks if the input `property` is a list. If not, it throws an error.
+  \item Iterates through each property in the list, ensuring that subproperties are unique and in character vector format.
+  \item If a property already exists in the list, it merges the subproperties while eliminating duplicates.
+}
+}
+\note{
+It is important to ensure that the subproperties are correctly formatted as character vectors. The function does not modify the format of the subproperties.
 }
 \examples{
+# Example usage:
 properties <- list(cell = c("length_a", "length_b", "length_c"), exptl = c("method"))
-add_property(properties)
+# Add new properties or merge existing ones
+updated_properties <- add_property(properties)
+print(updated_properties)
+
+}
+\seealso{
+\code{\link{fetch_data}}, \code{\link{query_search}} for related functions that utilize properties in querying the PDB.
 }

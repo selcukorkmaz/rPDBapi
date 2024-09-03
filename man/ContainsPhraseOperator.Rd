@@ -7,13 +7,24 @@
 ContainsPhraseOperator(attribute, value)
 }
 \arguments{
-\item{attribute}{The attribute to be evaluated.}
+\item{attribute}{The attribute to be evaluated. This should be the text field within the RCSB PDB
+that you want to search against.}
 
-\item{value}{The phrase to search for in the attribute.}
+\item{value}{The phrase to search for in the attribute. The search will look for this exact sequence of words
+within the specified attribute.}
 }
 \value{
-An object of class 'ContainsPhraseOperator'.
+An object of class `ContainsPhraseOperator` that can be used in search queries to retrieve entries
+        where the attribute contains the specified phrase.
 }
 \description{
-Constructs a ContainsPhraseOperator object for search operations that look for attributes containing a specific phrase.
+Constructs a `ContainsPhraseOperator` object for search operations that look for attributes containing a specific phrase.
+This operator is ideal for scenarios where the search needs to be more precise than just individual words,
+such as finding an exact phrase within a text attribute.
+}
+\examples{
+# Search for entries containing a specific phrase in an attribute
+operator <- ContainsPhraseOperator(attribute = "rcsb_primary_citation.title",
+                                    value = "molecular dynamics")
+print(operator)
 }

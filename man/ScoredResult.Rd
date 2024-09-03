@@ -2,18 +2,24 @@
 % Please edit documentation in R/search_client.R
 \name{ScoredResult}
 \alias{ScoredResult}
-\title{Create a Scored Result Object}
+\title{Create a Scored Result Object for PDB Searches}
 \usage{
 ScoredResult(entity_id, score)
 }
 \arguments{
-\item{entity_id}{A string representing the entity ID.}
+\item{entity_id}{A string representing the entity ID. This could be a PDB ID or any identifier relevant to the search.}
 
-\item{score}{A numeric value representing the score associated with the entity.}
+\item{score}{A numeric value representing the score associated with the entity. The score often indicates the relevance or quality of the match.}
 }
 \value{
-A list representing the scored result.
+A list representing the scored result, which can be included in the search results or used for further processing.
 }
 \description{
-Constructs a scored result object typically used in search results to associate an entity ID with its score.
+The `ScoredResult` function constructs a scored result object, typically used in search results to associate an entity ID with a numerical score.
+This is useful in ranking search results or displaying relevance scores alongside the results.
+}
+\examples{
+\donttest{
+result <- ScoredResult(entity_id = "1XYZ", score = 95.6)
+}
 }

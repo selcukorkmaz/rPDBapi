@@ -7,12 +7,21 @@
 DefaultOperator(value)
 }
 \arguments{
-\item{value}{The value to be used in the search operation.}
+\item{value}{The value to be used in the search operation. This is the key criterion for the search
+and should be a valid string or numeric value that the search will use as the matching term.}
 }
 \value{
-An object of class 'DefaultOperator' representing the default search operator.
+An object of class `DefaultOperator` representing the default search operator.
+        This object can be used directly in query formulations or further manipulated within complex search logic.
 }
 \description{
-Constructs a DefaultOperator object for use in general search operations within the RCSB PDB.
-This operator is a basic search operator with a single value.
+Constructs a `DefaultOperator` object for use in general search operations within the RCSB PDB.
+This operator is used when a simple, non-specific search operation is needed, based on a single value.
+The `DefaultOperator` can be employed in scenarios where the search criteria do not require complex conditions
+or additional logic.
+}
+\examples{
+# Create a basic search operator with a specific value
+operator <- DefaultOperator("4HHB")
+print(operator)
 }

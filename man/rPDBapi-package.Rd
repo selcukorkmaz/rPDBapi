@@ -6,7 +6,7 @@
 \alias{rPDBapi-package}
 \title{rPDBapi: A Comprehensive Interface for Accessing the Protein Data Bank}
 \description{
-Streamlines the interaction with the RCSB Protein Data Bank (PDB) \url{https://www.rcsb.org/}. This interface offers an intuitive and powerful tool for searching and retrieving a diverse range of data types from the PDB. It includes advanced functionalities like BLAST and sequence motif queries. Built upon the existing XML-based API of the PDB, it simplifies the creation of custom requests, thereby enhancing usability and flexibility for researchers.
+Streamlines the interaction with the 'RCSB' Protein Data Bank ('PDB') \url{https://www.rcsb.org/}. This interface offers an intuitive and powerful tool for searching and retrieving a diverse range of data types from the 'PDB'. It includes advanced functionalities like BLAST and sequence motif queries. Built upon the existing XML-based API of the 'PDB', it simplifies the creation of custom requests, thereby enhancing usability and flexibility for researchers.
 }
 \author{
 \strong{Maintainer}: Selcuk Korkmaz \email{selcukorkmaz@gmail.com} (\href{https://orcid.org/0000-0003-4632-6850}{ORCID})

@@ -7,14 +7,25 @@
 ExactMatchOperator(attribute, value)
 }
 \arguments{
-\item{attribute}{The attribute to match.}
+\item{attribute}{The attribute to match. This should be the name of the field within the RCSB PDB
+that you want to search against.}
 
-\item{value}{The exact value to search for.}
+\item{value}{The exact value to search for. This is the specific value of the attribute you are interested in.
+The search will return only those records where the attribute exactly matches this value.}
 }
 \value{
-An object of class 'ExactMatchOperator'.
+An object of class `ExactMatchOperator`. This object can be used in search queries
+        to retrieve precise matches within the RCSB PDB database.
 }
 \description{
-Constructs an ExactMatchOperator object for precise search operations in the RCSB PDB.
-It matches an exact attribute value.
+Constructs an `ExactMatchOperator` object for precise search operations within the RCSB PDB.
+This operator is designed to match an exact attribute value, making it ideal for searches where
+specificity is required. For example, if you need to find all entries that exactly match a certain
+attribute value, this operator will ensure only those precise matches are returned.
+}
+\examples{
+# Search for entries with an exact match to a given attribute
+operator <- ExactMatchOperator(attribute = "rcsb_entry_info.resolution_combined",
+                                value = "2.0")
+print(operator)
 }

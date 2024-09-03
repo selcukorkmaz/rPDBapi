@@ -7,11 +7,20 @@
 ExistsOperator(attribute)
 }
 \arguments{
-\item{attribute}{The attribute whose existence is to be checked.}
+\item{attribute}{The attribute whose existence is to be checked. This should be the field within the RCSB PDB
+that you want to ensure is present in the search results.}
 }
 \value{
-An object of class 'ExistsOperator'.
+An object of class `ExistsOperator` that can be used in search queries to retrieve entries
+        where the specified attribute exists.
 }
 \description{
-Constructs an ExistsOperator object for search operations to check the existence of an attribute.
+Constructs an `ExistsOperator` object for search operations to check the existence of an attribute.
+This operator is useful in queries where you need to ensure that a certain attribute is present
+within the entries being searched, regardless of its value.
+}
+\examples{
+# Search for entries where a specific attribute exists
+operator <- ExistsOperator(attribute = "rcsb_primary_citation.doi")
+print(operator)
 }

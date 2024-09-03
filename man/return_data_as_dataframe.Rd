@@ -2,23 +2,35 @@
 % Please edit documentation in R/return_data_as_dataframe.R
 \name{return_data_as_dataframe}
 \alias{return_data_as_dataframe}
-\title{Transform Response Data into a Dataframe}
+\title{Convert RCSB PDB Response Data into a Dataframe}
 \usage{
 return_data_as_dataframe(response, data_type, ids)
 }
 \arguments{
-\item{response}{A list containing the response data from a PDB query.}
+\item{response}{A list containing the response data from a PDB query. This list is expected to be structured according to the RCSB PDB GraphQL or REST API specifications.}
 
-\item{data_type}{A string indicating the type of data contained in the response.
-This parameter is not directly used in the function but might be relevant for context.}
+\item{data_type}{A string indicating the type of data contained in the response (e.g., "ENTRY", "POLYMER_ENTITY"). This parameter is primarily used for contextual information and does not directly influence the function's operations.}
 
-\item{ids}{A vector of identifiers corresponding to the response data.}
+\item{ids}{A vector of identifiers corresponding to the response data. These IDs are used to label the resulting dataframe, ensuring that each row corresponds to a specific query identifier.}
 }
 \value{
-A dataframe constructed from the response data.
-  Returns NULL if the response is null or empty.
+A dataframe constructed from the response data, where each row corresponds to an identifier from the `ids` vector and each column represents a data field from the response.
+        If the response is null or empty, the function returns `NULL`.
 }
 \description{
-This function converts response data from the RCSB Protein Data Bank (PDB) into a structured dataframe.
-It handles null or empty responses and flattens the data for dataframe conversion.
+The `return_data_as_dataframe` function transforms the response data obtained from a query to the RCSB Protein Data Bank (PDB) into a structured dataframe.
+This function handles various scenarios, including responses with duplicate names, null or empty responses, and nested data structures.
+It ensures that the resulting dataframe is consistently formatted and ready for downstream analysis.
+}
+\details{
+The `return_data_as_dataframe` function is designed to provide a flexible and robust mechanism for converting PDB query responses into dataframes. It addresses several common challenges in handling API responses, such as:
+\describe{
+  \item{Null or Empty Responses}{If the response is null or contains no data, the function immediately returns `NULL`, avoiding unnecessary processing.}
+  \item{Duplicate Names Handling}{The function detects and manages scenarios where the response contains duplicated names. It simplifies such lists by keeping only the first occurrence of each duplicated element, ensuring that the final dataframe has unique column names.}
+  \item{Recursive Flattening}{The function flattens nested lists within the response, ensuring that all relevant data is captured in a single-level dataframe structure. This is particularly useful for complex responses that contain deeply nested data elements.}
+  \item{Consistent Column Naming}{After processing the data, the function ensures that column names are consistent and do not retain unnecessary prefixes. This makes the resulting dataframe easier to interpret and work with in subsequent analyses.}
+}
+}
+\note{
+The function is equipped to handle responses with varying degrees of complexity. It is recommended to provide valid `ids` corresponding to the query to ensure that the dataframe rows are correctly labeled.
 }

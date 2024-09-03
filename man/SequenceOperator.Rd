@@ -12,19 +12,37 @@ SequenceOperator(
 )
 }
 \arguments{
-\item{sequence}{A string representing the sequence to search for.}
+\item{sequence}{A string representing the nucleotide or protein sequence to search for. The sequence should be provided in standard IUPAC format.}
 
-\item{sequence_type}{Optional: a string indicating the type of sequence ('DNA', 'RNA', or 'PROTEIN').
-If not provided, the type is autoresolved.}
+\item{sequence_type}{Optional: A string indicating the type of sequence. Accepted values are 'DNA', 'RNA', or 'PROTEIN'.
+If not provided, the sequence type is automatically determined based on the characters present in the sequence using the `autoresolve_sequence_type` function.}
 
-\item{evalue_cutoff}{A numeric value for the e-value cutoff in the search, default is 100.}
+\item{evalue_cutoff}{A numeric value for the e-value cutoff in the search. This defines the threshold for statistical significance of the search results. Default is 100.}
 
-\item{identity_cutoff}{A numeric value for the identity cutoff in the search, default is 0.95.}
+\item{identity_cutoff}{A numeric value for the identity cutoff in the search. This sets the minimum percentage of identity required for a match to be considered. Default is 0.95.}
 }
 \value{
-An object of class 'SequenceOperator' representing the sequence operator.
+An object of class `SequenceOperator` that encapsulates the search criteria for sequence-based queries within the RCSB PDB.
 }
 \description{
-Constructs a SequenceOperator object for use in sequence-based searches within the RCSB PDB.
-This operator allows specifying a sequence, its type, and cutoffs for e-value and identity.
+The `SequenceOperator` function constructs an operator for performing sequence-based searches within the RCSB Protein Data Bank (PDB).
+This operator allows users to specify a nucleotide or protein sequence, define the type of sequence, and set thresholds for e-value and identity in the search process.
+}
+\examples{
+# Example of creating a sequence operator for a protein sequence with specific cutoffs
+seq_operator <- SequenceOperator(
+  sequence = "MVLSPADKTNVKAAW",
+  sequence_type = "PROTEIN",
+  evalue_cutoff = 10,
+  identity_cutoff = 0.90
+)
+print(seq_operator)
+
+# Example of creating a sequence operator with automatic sequence type detection
+seq_operator_auto <- SequenceOperator(
+  sequence = "ATGCGTACGTAGC",
+  evalue_cutoff = 50,
+  identity_cutoff = 0.85
+)
+print(seq_operator_auto)
 }

@@ -2,16 +2,17 @@
 % Please edit documentation in R/search_client.R
 \name{infer_search_service}
 \alias{infer_search_service}
-\title{Infer the Appropriate Search Service}
+\title{Infer the Appropriate Search Service for RCSB PDB Queries}
 \usage{
 infer_search_service(search_operator)
 }
 \arguments{
-\item{search_operator}{A query operator object.}
+\item{search_operator}{A query operator object that specifies the type of search being performed.}
 }
 \value{
-The inferred search service.
+A string representing the inferred search service, which is necessary for constructing a valid query.
 }
 \description{
-Determines the appropriate search service for a given search operator in RCSB PDB queries.
+The `infer_search_service` function determines the appropriate search service for a given search operator.
+This function is essential for ensuring that queries are directed to the correct search service, such as basic search, text search, sequence search, etc.
 }

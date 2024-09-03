@@ -7,18 +7,42 @@
 get_info(pdb_id, url_root = "https://data.rcsb.org/rest/v1/core/entry/")
 }
 \arguments{
-\item{pdb_id}{A 4-character string specifying a PDB entry of interest.}
+\item{pdb_id}{A string specifying the PDB entry of interest. The `pdb_id` should be a 4-character alphanumeric code,
+representing the unique identifier of a PDB entry (e.g., "1XYZ").
+If a legacy PDB identifier is provided in the format `PDB_ID:CHAIN_ID`, it will be automatically converted to the
+new format for querying.}
 
-\item{url_root}{The root URL for the specific request type. Default is 'https://data.rcsb.org/rest/v1/core/entry/'.}
+\item{url_root}{The root URL for the API request. This parameter allows flexibility in querying different endpoints
+within the RCSB PDB API. The default is 'https://data.rcsb.org/rest/v1/core/entry/', which targets the core entry
+information endpoint. Advanced users can modify this to query other endpoints if needed.}
 }
 \value{
-An ordered dictionary (list in R) object corresponding to entry information.
-        Returns NULL if retrieval fails.
+A list object (an ordered dictionary in R) containing detailed information about the specified PDB entry.
+  The returned list includes various data fields, depending on the content available for the entry. For example,
+  it may contain information about the structure's authors, resolution, experiment type, macromolecules, ligands, etc.
+  If the data retrieval fails at any stage (e.g., network issues, invalid PDB ID, API downtime), the function will return `NULL`
+  and provide an informative error message.
 }
 \description{
-This function looks up all information about a given PDB ID using the REST API.
-It handles JSON data and HTTP requests and converts old entry identifiers.
+This function retrieves comprehensive information for a specified PDB (Protein Data Bank) entry by querying the RCSB PDB RESTful API.
+The function handles HTTP requests, processes JSON responses, and can manage legacy PDB identifiers.
+It is particularly useful for obtaining all available data related to a specific PDB entry, which can include metadata,
+structural details, experimental methods, and more.
+}
+\details{
+The `get_info` function is versatile and designed for researchers who need to extract detailed structural and
+experimental information from the RCSB PDB. The function is robust, providing error handling for various scenarios,
+including network failures, incorrect PDB IDs, and API errors. It automatically manages legacy PDB IDs, ensuring
+compatibility with the latest API standards.
+
+The output is a structured list that can be easily parsed or manipulated for further analysis, making it an essential
+tool for bioinformaticians and structural biologists working with PDB data.
+
+The function also offers flexibility in querying different parts of the RCSB PDB API by adjusting the `url_root`
+parameter, allowing users to target specific datasets within the PDB.
 }
 \examples{
-get_info(pdb_id = "4HHB")
+pdb_info <- get_info(pdb_id = "1XYZ")
+print(pdb_info)
+
 }

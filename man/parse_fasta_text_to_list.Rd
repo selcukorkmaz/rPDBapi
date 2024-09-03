@@ -2,22 +2,17 @@
 % Please edit documentation in R/parse_fasta_text_to_list.R
 \name{parse_fasta_text_to_list}
 \alias{parse_fasta_text_to_list}
-\title{Parse Raw FASTA Text into a List of Sequences}
+\title{Helper Function: Parse FASTA Text to List Grouped by Header}
 \usage{
-parse_fasta_text_to_list(raw_fasta_text)
+parse_fasta_text_to_list(fasta_text)
 }
 \arguments{
-\item{raw_fasta_text}{A string containing the raw FASTA text to be parsed.}
+\item{fasta_text}{A string containing FASTA-formatted text.}
 }
 \value{
-A list of FASTA sequences, each as a separate list element with entity ID, chains, sequence, and header.
+A list where each element is a FASTA sequence keyed by the header.
 }
 \description{
-This function parses raw FASTA text into a structured list format.
-It splits the FASTA text into individual sequences and extracts relevant information
-like entity ID, chains, sequence, and header.
-}
-\examples{
-raw_fasta_text <- ">1XYZ|Chains A, B\nMVLSPADKT...\n>2XYZ|Chain C\nGVLSADFT..."
-fasta_list <- parse_fasta_text_to_list(raw_fasta_text)
+This function parses a FASTA-formatted text into a list of sequences,
+where each sequence is keyed by the header (which includes organism name and chain information).
 }

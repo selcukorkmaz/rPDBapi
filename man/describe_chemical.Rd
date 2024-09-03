@@ -7,15 +7,29 @@
 describe_chemical(chem_id)
 }
 \arguments{
-\item{chem_id}{A string representing the 3-character chemical ID.}
+\item{chem_id}{A string representing the 3-character chemical ID. This ID is typically an alphanumeric string used to uniquely identify ligands, cofactors, or other small molecules within macromolecular structures. The string must not exceed 3 characters.}
 }
 \value{
-A dictionary containing the chemical description.
+A list containing detailed information about the chemical compound. This list includes various fields such as:
+\describe{
+  \item{rcsb_chem_comp_descriptor}{A sublist containing chemical descriptors like SMILES, InChI strings, molecular weight, and other chemical properties.}
+  \item{rcsb_chem_comp_info}{Information regarding the compound’s classification, formula, and additional relevant data.}
+  \item{other}{Other fields may also be included, depending on the specific compound and the data available from the RCSB PDB.}
+}
 }
 \description{
-This function retrieves the description of a chemical compound from the RCSB PDB based on its ID.
+Retrieves detailed information about a chemical compound from the RCSB Protein Data Bank (PDB) based on its chemical ID.
 }
 \examples{
+\dontrun{
+# Retrieve chemical information for N-Acetyl-D-Glucosamine (NAG)
 chem_desc <- describe_chemical('NAG')
-chem_desc$rcsb_chem_comp_descriptor$smiles
+
+# Access the SMILES string of the compound
+smiles_string <- chem_desc$rcsb_chem_comp_descriptor$smiles
+
+# Attempting to retrieve a chemical with an invalid ID (e.g., longer than 3 characters)
+# This will raise an error
+chem_desc <- describe_chemical('INVALID')
+}
 }
