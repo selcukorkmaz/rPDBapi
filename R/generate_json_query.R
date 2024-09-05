@@ -74,7 +74,7 @@ generate_json_query <- function(ids, data_type, properties) {
                   ASSEMBLY = "assembly_ids",
                   CHEMICAL_COMPONENT = "comp_ids")
 
-  data_str <- sprintf("%s(%s: [\"%s\"])", DataType[[data_type]], q_str, paste(ids, collapse = "\", \""))
+  data_str <- paste0(DataType[[data_type]], "(", q_str, ": [\"", paste(ids, collapse = "\", \""), "\"])")
 
   props_str <- sapply(properties, function(x) {
     if (length(x) == 0) {

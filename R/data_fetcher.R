@@ -19,22 +19,16 @@
 #' Each \code{data_type} corresponds to a specific hierarchy level within the PDB data structure, and selecting the appropriate type ensures that you retrieve relevant and accurate data.
 #'
 #' @param properties A list or dictionary of properties to be included in the data fetching process. The properties should match the data type you are querying. For example, if you are fetching \code{POLYMER_ENTITY} data, you might specify properties such as \code{"rcsb_entity_source_organism"} or \code{"rcsb_cluster_membership"}.
-#' \describe{
-#'   \item{\code{"rcsb_entry_info"}}{General entry-level information such as molecular weight or deposition date.}
-#'   \item{\code{"exptl"}}{Experimental method details, such as X-ray diffraction or NMR spectroscopy.}
-#'   \item{\code{"rcsb_entity_source_organism"}}{Taxonomy and source organism information for polymer entities.}
-#'   \item{\code{"pdbx_entity_branch"}}{Details specific to branched entities, such as carbohydrate type.}
-#'   \item{\code{"rcsb_assembly_info"}}{Information related to biological assemblies, such as polymer entity counts.}
-#' }
 #' The \code{properties} argument allows users to customize the data they retrieve by specifying exactly which attributes of the data type they are interested in. It is important to match the properties to the correct data type to ensure accurate and meaningful results.
+#' The \href{https://data.rcsb.org/#data-schema}{RCSB PDB Data Schema} provides detailed documentation on the properties available for each data type. Users are encouraged to refer to this resource when selecting properties for their queries.
 #'
 #' @param return_as_dataframe A boolean indicating whether to return the response as a dataframe. If \code{TRUE}, the data is returned in a structured dataframe format, which is convenient for analysis and manipulation in R. If \code{FALSE}, the data is returned in its original format, which may be a nested list or JSON-like structure. Default is \code{TRUE}.
+#' @param verbosity A boolean flag indicating whether to print status messages during the function execution. When set to \code{TRUE}, the function will output messages detailing the progress and any issues encountered.
 #'
 #' @return Depending on the value of \code{return_as_dataframe}, this function returns either a dataframe or the raw data in its original format. The dataframe format is particularly useful for further data analysis and visualization within R, while the raw format may be preferred for more complex or custom data processing tasks.
 #'
 #' @details The `data_fetcher` function is particularly useful for researchers who need to access and analyze specific subsets of PDB data. By providing a list of IDs and the corresponding data type, users can retrieve only the information relevant to their study, reducing the need to manually filter or process large datasets. The function also supports fetching multiple properties simultaneously, allowing for a more comprehensive data retrieval process.
 #'
-#' @seealso The \href{https://data.rcsb.org/#data-schema}{RCSB PDB Data Schema} provides detailed documentation on the properties available for each data type. Users are encouraged to refer to this resource when selecting properties for their queries.
 #'
 #' @importFrom purrr flatten
 #' @examples
@@ -85,21 +79,69 @@
 #' )
 #'
 #' @export
-data_fetcher <- function(id = NULL, data_type = "ENTRY", properties = NULL, return_as_dataframe = TRUE) {
+data_fetcher <- function(id = NULL, data_type = "ENTRY", properties = NULL, return_as_dataframe = TRUE, verbosity = FALSE) {
 
-  # properties <- add_property(properties)
-  # print(properties)
-  json_query <- generate_json_query(id, data_type, properties)
-  # print(json_query)
-  response <- fetch_data(json_query = json_query, data_type = data_type, ids = id)
-  # print(response)
+  # Validate input parameters
+  if (is.null(id) || length(id) == 0) {
+    stop("Invalid input: 'id' must not be NULL or empty.")
+  }
 
-  if(return_as_dataframe){
+  if (!data_type %in% c("ENTRY", "POLYMER_ENTITY", "BRANCHED_ENTITY",  "ASSEMBLY", "NONPOLYMER_ENTITY",
+                        "POLYMER_ENTITY_INSTANCE", "BRANCHED_ENTITY_INSTANCE", "NONPOLYMER_ENTITY_INSTANCE", "CHEMICAL_COMPONENT")) {
+    stop("Invalid 'data_type'. Please provide a valid data type from the following options:
+           'ENTRY', 'POLYMER_ENTITY', 'BRANCHED_ENTITY', 'ASSEMBLY', 'NONPOLYMER_ENTITY',
+         'POLYMER_ENTITY_INSTANCE', 'BRANCHED_ENTITY_INSTANCE', 'NONPOLYMER_ENTITY_INSTANCE', 'CHEMICAL_COMPONENT.'")
+  }
 
-    response <- return_data_as_dataframe(response, data_type, id)
+  if (is.null(properties) || length(properties) == 0) {
+    stop("Invalid input: 'properties' must not be NULL or empty.")
+  }
 
+  # Add properties and generate query
+  if (verbosity) {
+    message("Adding properties and generating JSON query...")
+  }
+
+  json_query <- tryCatch(
+    {
+      generate_json_query(id, data_type, properties)
+    },
+    error = function(e) {
+      stop("Failed to generate JSON query. Error: ", e$message)
+    }
+  )
+
+  # Fetch data from the PDB
+  response <- tryCatch(
+    {
+      fetch_data(json_query = json_query, data_type = data_type, ids = id)
+    },
+    error = function(e) {
+      stop("Failed to fetch data from PDB. Error: ", e$message)
+    }
+  )
+
+  if (is.null(response)) {
+    warning("No response was received for the provided query.")
+    return(NULL)
+  }
+
+  if (verbosity) {
+    message("Data fetched successfully. Preparing response...")
+  }
+
+  # Optionally return as a dataframe
+  if (return_as_dataframe) {
+    response <- tryCatch(
+      {
+        return_data_as_dataframe(response, data_type, id)
+      },
+      error = function(e) {
+        stop("Failed to convert response to dataframe. Error: ", e$message)
+      }
+    )
   }
 
   return(response)
-
 }
+

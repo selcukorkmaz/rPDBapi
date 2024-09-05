@@ -33,41 +33,51 @@
 #'
 
 fetch_data <- function(json_query, data_type, ids) {
-  # Check if the JSON query is empty or NULL
-  if (is.null(json_query) || length(json_query) == 0) {
-    stop("JSON query is empty or has not been created. Please ensure your query is properly constructed.")
+
+  # Helper function for better error logging
+  log_error <- function(message, details = NULL) {
+    full_message <- paste0("ERROR: ", message)
+    if (!is.null(details)) {
+      full_message <- paste0(full_message, " Details: ", details)
+    }
+    stop(full_message)
   }
 
-  # Attempt to execute the GraphQL query
+  # Validate the JSON query
+  if (is.null(json_query) || length(json_query) == 0) {
+    log_error("JSON query is empty or invalid. Please ensure the query is correctly formatted.")
+  }
+
+  # Execute the GraphQL query and handle possible network or query errors
   response <- tryCatch(
     {
       search_graphql(graphql_json_query = list(query = json_query))
     },
     error = function(e) {
-      stop("Failed to execute GraphQL query. Error: ", e$message)
+      log_error("GraphQL query execution failed.", e$message)
     }
   )
 
-  # Check if the response is NULL
+  # Handle NULL response (server down or no response)
   if (is.null(response)) {
-    stop("Received a NULL response from the server. The query may have failed or the server may be down.")
+    log_error("Received NULL response from the server. Please check the server status or query validity.")
   }
 
-  # Check for errors in the response
+  # Check for errors returned within the GraphQL response
   if ("errors" %in% names(response)) {
-    message("Errors encountered in fetch_data():")
+    message("Errors encountered in GraphQL query:")
     lapply(response$errors, function(error) message(error$message))
-    stop("The GraphQL query returned errors. Please review the error messages above.")
+    log_error("The query returned errors. Please review the error messages above.")
   }
 
-  # Check if the data returned matches the expected IDs
+  # Verify if the expected IDs match the returned data
   if (length(response$data[[1]]) != length(ids)) {
-    warning("Mismatch between the number of returned data entries and the provided IDs.")
+    warning("Mismatch in the number of returned data entries and the provided IDs.")
     missing_ids <- setdiff(ids, names(response$data[[1]]))
     if (length(missing_ids) > 0) {
-      warning("The following IDs were not found in the PDB: ", paste(missing_ids, collapse = ", "))
+      warning("The following IDs were not found: ", paste(missing_ids, collapse = ", "))
     }
-    stop("One or more IDs could not be retrieved from the PDB. Please check the provided IDs and try again.")
+    log_error("One or more IDs could not be retrieved. Please check the IDs and try again.")
   } else {
     names(response$data[[1]]) <- ids
   }

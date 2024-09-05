@@ -10,7 +10,8 @@ query_search(
   return_type = "entry",
   scan_params = NULL,
   num_attempts = 1,
-  sleep_time = 0.5
+  sleep_time = 0.5,
+  search_url = SEARCH_URL
 )
 }
 \arguments{
@@ -45,6 +46,8 @@ or temporary server unavailability. Default is 1 attempt.}
 
 \item{sleep_time}{A numeric value specifying the time in seconds to wait between attempts if the query fails and multiple
 attempts are specified. Default is 0.5 seconds.}
+
+\item{search_url}{A string representing the base URL for the FASTA retrieval. By default, this is set to the global constant \code{SEARCH_URL}, but users can specify a different URL if needed.}
 }
 \value{
 Depending on the \code{return_type} specified, the function either returns:

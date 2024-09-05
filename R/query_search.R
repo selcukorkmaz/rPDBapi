@@ -30,6 +30,7 @@
 #'   or temporary server unavailability. Default is 1 attempt.
 #' @param sleep_time A numeric value specifying the time in seconds to wait between attempts if the query fails and multiple
 #'   attempts are specified. Default is 0.5 seconds.
+#' @param search_url A string representing the base URL for the FASTA retrieval. By default, this is set to the global constant \code{SEARCH_URL}, but users can specify a different URL if needed.
 #'
 #' @return Depending on the \code{return_type} specified, the function either returns:
 #'   \describe{
@@ -77,7 +78,7 @@
 #' @export
 
 
-query_search <- function(search_term, query_type = "full_text", return_type = "entry", scan_params = NULL, num_attempts = 1, sleep_time = 0.5) {
+query_search <- function(search_term, query_type = "full_text", return_type = "entry", scan_params = NULL, num_attempts = 1, sleep_time = 0.5, search_url = SEARCH_URL) {
   # Define query subtype as NULL initially
   query_subtype <- NULL
 
@@ -112,8 +113,6 @@ query_search <- function(search_term, query_type = "full_text", return_type = "e
   } else if (query_type == "uniprot") {
     query_type <- "text"
     query_subtype <- "uniprot"
-  } else if (query_type != "full_text") {
-    stop("Unsupported Query Type: The query_type '", query_type, "' is not supported. Please use one of the following: 'full_text', 'PubmedIdQuery', 'TreeEntityQuery', 'ExpTypeQuery', 'AdvancedAuthorQuery', 'OrganismQuery', 'pfam', 'uniprot'.")
   }
 
   # Check for valid return_type
@@ -133,7 +132,9 @@ query_search <- function(search_term, query_type = "full_text", return_type = "e
     query_params$parameters <- list(target = "pdb_protein_sequence", value = search_term)
   } else if (query_type == "structure") {
     query_params$parameters <- list(operator = "relaxed_shape_match", value = list(entry_id = search_term, assembly_id = "1"))
-  }
+  }else{
+    stop("Unsupported Query Type: The query_type '", query_type, "' is not supported. Please use one of the following: 'full_text', 'PubmedIdQuery', 'TreeEntityQuery', 'ExpTypeQuery', 'AdvancedAuthorQuery', 'OrganismQuery', 'pfam', 'uniprot', 'sequence', 'structure'.")
+   }
 
   # Apply query_subtype conditions if applicable
   if (!is.null(query_subtype)) {
@@ -162,14 +163,12 @@ query_search <- function(search_term, query_type = "full_text", return_type = "e
     scan_params$request_options$return_all_hits <- TRUE
   }
 
-  url <- "https://search.rcsb.org/rcsbsearch/v2/query?json="
-
   query_text <- toJSON(scan_params, auto_unbox = TRUE, pretty = TRUE)
 
   for (attempt in 1:num_attempts) {
     response <- tryCatch(
       {
-        POST(url, body = query_text, encode = "json", content_type("application/json"))
+        POST(search_url, body = query_text, encode = "json", content_type("application/json"))
       },
       error = function(e) {
         warning("HTTP request failed on attempt ", attempt, ": ", e$message)

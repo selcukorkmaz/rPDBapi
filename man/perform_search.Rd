@@ -29,7 +29,8 @@ perform_search(
   \item{\code{SeqMotifOperator}}{For searching sequence motifs, using pattern types like SIMPLE, PROSITE, or REGEX.}
   \item{\code{ChemicalOperator}}{For chemical structure searches, using SMILES or InChI descriptors and various matching criteria.}
 }
-These operators allow you to build complex search queries tailored to your specific needs.}
+
+Please see the Details section.}
 
 \item{return_type}{A string specifying the type of data to return. The available options for \code{return_type} include:
 \describe{
@@ -68,6 +69,11 @@ The function returns search results based on the specified \code{return_type}:
 }
 \description{
 This function allows users to perform highly customizable searches in the RCSB Protein Data Bank (PDB) by specifying detailed search criteria. It interfaces directly with the RCSB PDB's RESTful API, enabling complex queries to retrieve specific data, such as PDB entries, assemblies, polymer entities, non-polymer entities, and more.
+}
+\details{
+The operators allow you to build complex search queries tailored to your specific needs. Detailed documentation for each search operator can be found in the \href{https://search.rcsb.org/#search-operators}{RCSB PDB Search Operators}.
+The searchable attributes include annotations from the mmCIF dictionary, external resources, and those added by RCSB PDB. Both internal additions to the mmCIF dictionary and external resource annotations are prefixed with `rcsb_`.
+For a complete list of available attributes for text searches, refer to the \href{https://search.rcsb.org/structure-search-attributes.html}{Structure Attributes Search} and \href{https://search.rcsb.org/chemical-search-attributes.html}{Chemical Attributes Search} pages.
 }
 \examples{
 \donttest{

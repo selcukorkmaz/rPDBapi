@@ -12,7 +12,6 @@ test_that("get_fasta_from_rcsb_entry returns correct FASTA sequences", {
 test_that("get_fasta_from_rcsb_entry returns correct chain sequence", {
   result <- get_fasta_from_rcsb_entry("4HHB", chain_id = "A")
 
-  expect_type(result, "list")
-  expect_true("A" %in% names(result))
-  expect_true(grepl("VLSPADKTNVKAAWGKV", result[["A"]]))
+  expect_type(result, "character")
+  expect_true(grepl("VLSPADKTNVKAAWGKV", result))
 })

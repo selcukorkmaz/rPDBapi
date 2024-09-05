@@ -4,17 +4,13 @@
 \alias{get_info}
 \title{Retrieve Information for a Given PDB ID}
 \usage{
-get_info(pdb_id, url_root = "https://data.rcsb.org/rest/v1/core/entry/")
+get_info(pdb_id)
 }
 \arguments{
 \item{pdb_id}{A string specifying the PDB entry of interest. The `pdb_id` should be a 4-character alphanumeric code,
 representing the unique identifier of a PDB entry (e.g., "1XYZ").
 If a legacy PDB identifier is provided in the format `PDB_ID:CHAIN_ID`, it will be automatically converted to the
 new format for querying.}
-
-\item{url_root}{The root URL for the API request. This parameter allows flexibility in querying different endpoints
-within the RCSB PDB API. The default is 'https://data.rcsb.org/rest/v1/core/entry/', which targets the core entry
-information endpoint. Advanced users can modify this to query other endpoints if needed.}
 }
 \value{
 A list object (an ordered dictionary in R) containing detailed information about the specified PDB entry.

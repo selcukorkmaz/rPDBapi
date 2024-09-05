@@ -24,12 +24,11 @@ Retrieves detailed information about a chemical compound from the RCSB Protein D
 \dontrun{
 # Retrieve chemical information for N-Acetyl-D-Glucosamine (NAG)
 chem_desc <- describe_chemical('NAG')
+chem_desc
 
 # Access the SMILES string of the compound
 smiles_string <- chem_desc$rcsb_chem_comp_descriptor$smiles
+smiles_string
 
-# Attempting to retrieve a chemical with an invalid ID (e.g., longer than 3 characters)
-# This will raise an error
-chem_desc <- describe_chemical('INVALID')
 }
 }

@@ -12,7 +12,8 @@ get_pdb_file(
   compression = TRUE,
   save = FALSE,
   path = NULL,
-  verbosity = TRUE
+  verbosity = TRUE,
+  download_base_url = DOWNLOAD_BASE_URL
 )
 }
 \arguments{
@@ -44,6 +45,8 @@ the file is processed and optionally saved, but not retained after processing un
 temporary directory. If `save` is TRUE, this path is required.}
 
 \item{verbosity}{A boolean flag indicating whether to print status messages during the function execution.}
+
+\item{download_base_url}{A string representing the base URL for the PDB file retrieval. By default, this is set to the global constant \code{DOWNLOAD_BASE_URL}, but users can specify a different URL if needed.}
 }
 \value{
 A list of class \code{"pdb"} containing the following components:

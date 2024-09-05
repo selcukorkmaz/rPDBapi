@@ -17,7 +17,8 @@
 #'   \item{\code{SeqMotifOperator}}{For searching sequence motifs, using pattern types like SIMPLE, PROSITE, or REGEX.}
 #'   \item{\code{ChemicalOperator}}{For chemical structure searches, using SMILES or InChI descriptors and various matching criteria.}
 #' }
-#' These operators allow you to build complex search queries tailored to your specific needs.
+#'
+#' Please see the Details section.
 #'
 #' @param return_type A string specifying the type of data to return. The available options for \code{return_type} include:
 #' \describe{
@@ -42,6 +43,11 @@
 #' @param return_raw_json_dict Logical; if \code{TRUE}, the function returns the raw JSON response from the PDB API. This option is valuable for advanced users who wish to process the raw data themselves or need access to additional details. Default is \code{FALSE}.
 #'
 #' @param verbosity Logical; if \code{TRUE}, detailed messages will be displayed during execution, providing insights into the query being sent and the response received. Verbose mode is useful for debugging or when you need insights into the function's operation. Default is \code{TRUE}.
+#'
+#' @details
+#' The operators allow you to build complex search queries tailored to your specific needs. Detailed documentation for each search operator can be found in the \href{https://search.rcsb.org/#search-operators}{RCSB PDB Search Operators}.
+#' The searchable attributes include annotations from the mmCIF dictionary, external resources, and those added by RCSB PDB. Both internal additions to the mmCIF dictionary and external resource annotations are prefixed with `rcsb_`.
+#' For a complete list of available attributes for text searches, refer to the \href{https://search.rcsb.org/structure-search-attributes.html}{Structure Attributes Search} and \href{https://search.rcsb.org/chemical-search-attributes.html}{Chemical Attributes Search} pages.
 #'
 #' @return The function returns search results based on the specified \code{return_type}:
 #' \describe{

@@ -8,7 +8,8 @@ data_fetcher(
   id = NULL,
   data_type = "ENTRY",
   properties = NULL,
-  return_as_dataframe = TRUE
+  return_as_dataframe = TRUE,
+  verbosity = FALSE
 )
 }
 \arguments{
@@ -29,16 +30,12 @@ data_fetcher(
 Each \code{data_type} corresponds to a specific hierarchy level within the PDB data structure, and selecting the appropriate type ensures that you retrieve relevant and accurate data.}
 
 \item{properties}{A list or dictionary of properties to be included in the data fetching process. The properties should match the data type you are querying. For example, if you are fetching \code{POLYMER_ENTITY} data, you might specify properties such as \code{"rcsb_entity_source_organism"} or \code{"rcsb_cluster_membership"}.
-\describe{
-  \item{\code{"rcsb_entry_info"}}{General entry-level information such as molecular weight or deposition date.}
-  \item{\code{"exptl"}}{Experimental method details, such as X-ray diffraction or NMR spectroscopy.}
-  \item{\code{"rcsb_entity_source_organism"}}{Taxonomy and source organism information for polymer entities.}
-  \item{\code{"pdbx_entity_branch"}}{Details specific to branched entities, such as carbohydrate type.}
-  \item{\code{"rcsb_assembly_info"}}{Information related to biological assemblies, such as polymer entity counts.}
-}
-The \code{properties} argument allows users to customize the data they retrieve by specifying exactly which attributes of the data type they are interested in. It is important to match the properties to the correct data type to ensure accurate and meaningful results.}
+The \code{properties} argument allows users to customize the data they retrieve by specifying exactly which attributes of the data type they are interested in. It is important to match the properties to the correct data type to ensure accurate and meaningful results.
+The \href{https://data.rcsb.org/#data-schema}{RCSB PDB Data Schema} provides detailed documentation on the properties available for each data type. Users are encouraged to refer to this resource when selecting properties for their queries.}
 
 \item{return_as_dataframe}{A boolean indicating whether to return the response as a dataframe. If \code{TRUE}, the data is returned in a structured dataframe format, which is convenient for analysis and manipulation in R. If \code{FALSE}, the data is returned in its original format, which may be a nested list or JSON-like structure. Default is \code{TRUE}.}
+
+\item{verbosity}{A boolean flag indicating whether to print status messages during the function execution. When set to \code{TRUE}, the function will output messages detailing the progress and any issues encountered.}
 }
 \value{
 Depending on the value of \code{return_as_dataframe}, this function returns either a dataframe or the raw data in its original format. The dataframe format is particularly useful for further data analysis and visualization within R, while the raw format may be preferred for more complex or custom data processing tasks.
@@ -96,7 +93,4 @@ data_fetcher(
   return_as_dataframe = TRUE
 )
 
-}
-\seealso{
-The \href{https://data.rcsb.org/#data-schema}{RCSB PDB Data Schema} provides detailed documentation on the properties available for each data type. Users are encouraged to refer to this resource when selecting properties for their queries.
 }

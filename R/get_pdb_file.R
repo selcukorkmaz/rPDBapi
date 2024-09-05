@@ -26,6 +26,8 @@
 #' @param path A string specifying the directory where the downloaded file should be saved. If NULL, the file is saved in a
 #'   temporary directory. If `save` is TRUE, this path is required.
 #' @param verbosity A boolean flag indicating whether to print status messages during the function execution.
+#' @param download_base_url A string representing the base URL for the PDB file retrieval. By default, this is set to the global constant \code{DOWNLOAD_BASE_URL}, but users can specify a different URL if needed.
+#'
 #' @return A list of class \code{"pdb"} containing the following components:
 #'   \describe{
 #'     \item{\code{atom}}{A data frame containing atomic coordinate data (ATOM and HETATM records). Each row corresponds to an
@@ -59,9 +61,8 @@
 #' are included to guide the user in case of issues with file retrieval or processing.
 #' @export
 
+get_pdb_file <- function(pdb_id, filetype = 'cif', rm.insert = FALSE, rm.alt = TRUE, compression = TRUE, save = FALSE, path = NULL, verbosity = TRUE, download_base_url = DOWNLOAD_BASE_URL) {
 
-get_pdb_file <- function(pdb_id, filetype = 'cif', rm.insert = FALSE, rm.alt = TRUE, compression = TRUE, save = FALSE, path = NULL, verbosity = TRUE) {
-  PDB_DOWNLOAD_BASE_URL <- "https://files.rcsb.org/download/"
   cl <- match.call()
 
   # Validate the input filetype
@@ -74,45 +75,44 @@ get_pdb_file <- function(pdb_id, filetype = 'cif', rm.insert = FALSE, rm.alt = T
   }
 
   # Construct the PDB URL based on input parameters
-  pdb_url <- paste0(PDB_DOWNLOAD_BASE_URL, pdb_id)
-  if (filetype == 'structfact') {
-    pdb_url <- paste0(pdb_url, "-sf.cif")
+  pdb_url <- if (filetype == 'structfact') {
+    paste0(download_base_url, pdb_id, "-sf.cif")
   } else {
-    pdb_url <- paste0(pdb_url, ".", filetype)
-  }
-
-  if (compression) {
-    pdb_url <- paste0(pdb_url, ".gz")
+    paste0(download_base_url, pdb_id, ".", filetype, ifelse(compression, ".gz", ""))
   }
 
   if (verbosity) {
-    message(paste("Sending GET request to", pdb_url, "to fetch", pdb_id, "'s", filetype, "file as a string."))
+    message(paste("Sending GET request to", pdb_url, "to fetch", pdb_id, "'s", filetype, "file."))
   }
 
-  # Attempt to download the PDB file
+  # Send API request using the core function
   response <- tryCatch(
     {
-      GET(pdb_url)
+      send_api_request(url = pdb_url)
     },
     error = function(e) {
-      stop("Failed to retrieve data from the PDB database: ", e$message)
+      stop("Network Error: Failed to retrieve data for PDB ID '", pdb_id, "'. Error: ", e$message)
     }
   )
 
-  if (http_status(response)$category != "Success") {
-    stop("Failed to retrieve the PDB file. HTTP status: ", http_status(response)$status, " - ", http_status(response)$message)
-  }
+  # Handle any potential HTTP errors using the core function
+  tryCatch(
+    {
+      handle_api_errors(response, pdb_url)
+    },
+    error = function(e) {
+      stop("API Error: Failed to retrieve data for PDB ID '", pdb_id, "'. Error: ", e$message)
+    }
+  )
 
   # Set the download path
   if (is.null(path)) {
-    path <- file.path(tempdir(), paste0(pdb_id, ".", filetype))
-    if (compression) path <- paste0(path, ".gz")
+    path <- file.path(tempdir(), paste0(pdb_id, ".", filetype, ifelse(compression, ".gz", "")))
   } else {
     if (!dir.exists(path)) {
       stop("Specified path does not exist: ", path)
     }
-    path <- file.path(path, paste0(pdb_id, ".", filetype))
-    if (compression) path <- paste0(path, ".gz")
+    path <- file.path(path, paste0(pdb_id, ".", filetype, ifelse(compression, ".gz", "")))
   }
 
   # Save the downloaded file

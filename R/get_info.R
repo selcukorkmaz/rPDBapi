@@ -9,9 +9,6 @@
 #'   representing the unique identifier of a PDB entry (e.g., "1XYZ").
 #'   If a legacy PDB identifier is provided in the format `PDB_ID:CHAIN_ID`, it will be automatically converted to the
 #'   new format for querying.
-#' @param url_root The root URL for the API request. This parameter allows flexibility in querying different endpoints
-#'   within the RCSB PDB API. The default is 'https://data.rcsb.org/rest/v1/core/entry/', which targets the core entry
-#'   information endpoint. Advanced users can modify this to query other endpoints if needed.
 #' @return A list object (an ordered dictionary in R) containing detailed information about the specified PDB entry.
 #'   The returned list includes various data fields, depending on the content available for the entry. For example,
 #'   it may contain information about the structure's authors, resolution, experiment type, macromolecules, ligands, etc.
@@ -36,39 +33,47 @@
 #' parameter, allowing users to target specific datasets within the PDB.
 #'
 #' @export
-get_info <- function(pdb_id, url_root = 'https://data.rcsb.org/rest/v1/core/entry/') {
+get_info <- function(pdb_id) {
   # Replace old entry identifier format with the new one
   pdb_id <- gsub(":", "/", pdb_id)
-  url <- paste0(url_root, pdb_id)
 
-  # Attempt to retrieve data from the specified URL
+  # Construct the URL dynamically using the centralized API configuration
+  url <- get_pdb_api_url(PDB_API_CONFIG$entry, pdb_id)
+
+  # Send API request using the core function
   response <- tryCatch(
     {
-      GET(url)
+      send_api_request(url = url)
     },
     error = function(e) {
-      stop("Failed to retrieve data from the RCSB PDB. Error: ", e$message)
+      stop("Network Error: Failed to retrieve data from the RCSB PDB for PDB ID '", pdb_id, "'. Error: ", e$message)
     }
   )
 
-  # Check if the response is successful
-  if (http_status(response)$category != "Success") {
-    stop("Request for PDB ID '",  pbd_id,  "' failed with message: ", http_status(response)$message)
-  }
-
-  # Attempt to parse the JSON response
-  out <- tryCatch(
+  # Handle any potential HTTP errors using the core function
+  tryCatch(
     {
-      fromJSON(content(response, "text", encoding = "UTF-8"))
+      handle_api_errors(response, url)
     },
     error = function(e) {
-      stop("Failed to parse JSON response from the RCSB PDB for PDB ID '", pdb_id, "'. Error: ", e$message)
+      stop("API Error: Failed to retrieve data for PDB ID '", pdb_id, "'. Error: ", e$message)
+    }
+  )
+
+  # Parse the response using the core function
+  pdb_data <- tryCatch(
+    {
+      parse_response(response, format = "json")
+    },
+    error = function(e) {
+      stop("Parsing Error: Failed to parse the JSON response from the RCSB PDB for PDB ID '", pdb_id, "'. Error: ", e$message)
     }
   )
 
   # Return the parsed output
-  return(out)
+  return(pdb_data)
 }
+
 
 # Alias the function
 utils::globalVariables("pbd_id")

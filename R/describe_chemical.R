@@ -15,59 +15,58 @@
 #' \dontrun{
 #' # Retrieve chemical information for N-Acetyl-D-Glucosamine (NAG)
 #' chem_desc <- describe_chemical('NAG')
+#' chem_desc
 #'
 #' # Access the SMILES string of the compound
 #' smiles_string <- chem_desc$rcsb_chem_comp_descriptor$smiles
+#' smiles_string
 #'
-#' # Attempting to retrieve a chemical with an invalid ID (e.g., longer than 3 characters)
-#' # This will raise an error
-#' chem_desc <- describe_chemical('INVALID')
 #' }
 #' @export
 
 
-describe_chemical <- function(chem_id) {
+describe_chemical <- function(chem_id, url_root = URL_ROOT) {
   # Validate the input chemical ID
   if (nchar(chem_id) > 3) {
     stop("Input Error: The provided ligand ID '", chem_id, "' exceeds the maximum allowed length of 3 characters. Please provide a valid 3-character ligand ID.")
   }
 
   # Construct the URL for the API request
-  url_root <- 'https://data.rcsb.org/rest/v1/core/chemcomp/'
   url <- paste0(url_root, chem_id)
 
-  # Attempt to retrieve data from the API
+  # Send API request using the core function
   response <- tryCatch(
     {
-      GET(url)
+      send_api_request(url = url)
     },
     error = function(e) {
-      stop("Network Error: Failed to retrieve data for ligand ID '", chem_id, "'. The error encountered was: ", e$message, ". Please check your internet connection or try again later.")
+      stop("Network Error: Failed to retrieve data for ligand ID '", chem_id, "'. Error: ", e$message)
     }
   )
 
-  # Check if the response is NULL
-  if (is.null(response)) {
-    stop("Server Error: Received a NULL response from the server for ligand ID '", chem_id, "'. The query may have failed or the server may be down.")
-  }
-
-  # Check if the HTTP status of the response indicates a failure
-  if (http_status(response)$category != "Success") {
-    stop("HTTP Error: Retrieval of data for ligand ID '", chem_id, "' failed with status: '", http_status(response)$reason, "'. Please verify the ligand ID and try again.")
-  }
-
-  # Attempt to parse the JSON content of the response
-  out <- tryCatch(
+  # Handle any potential HTTP errors using the core function
+  tryCatch(
     {
-      fromJSON(content(response, "text", encoding = "UTF-8"))
+      handle_api_errors(response, url)
     },
     error = function(e) {
-      stop("Parsing Error: Failed to parse the JSON response for ligand ID '", chem_id, "'. The error encountered was: ", e$message, ". The response might be malformed or unexpected.")
+      stop("API Error: Failed to retrieve data for ligand ID '", chem_id, "'. Error: ", e$message)
+    }
+  )
+
+  # Parse the response using the core function
+  chemical_data <- tryCatch(
+    {
+      parse_response(response, format = "json")
+    },
+    error = function(e) {
+      stop("Parsing Error: Failed to parse the JSON response for ligand ID '", chem_id, "'. Error: ", e$message)
     }
   )
 
   # Return the parsed output
-  return(out)
+  return(chemical_data)
 }
 
+utils::globalVariables("url_root")
 
