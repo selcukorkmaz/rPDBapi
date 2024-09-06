@@ -61,7 +61,8 @@
 #' are included to guide the user in case of issues with file retrieval or processing.
 #' @export
 
-get_pdb_file <- function(pdb_id, filetype = 'cif', rm.insert = FALSE, rm.alt = TRUE, compression = TRUE, save = FALSE, path = NULL, verbosity = TRUE, download_base_url = DOWNLOAD_BASE_URL) {
+get_pdb_file <- function(pdb_id, filetype = 'cif', rm.insert = FALSE, rm.alt = TRUE, compression = TRUE,
+                         save = FALSE, path = NULL, verbosity = TRUE, download_base_url = DOWNLOAD_BASE_URL) {
 
   cl <- match.call()
 

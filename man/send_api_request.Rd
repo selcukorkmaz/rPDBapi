@@ -2,19 +2,38 @@
 % Please edit documentation in R/send_api_request.R
 \name{send_api_request}
 \alias{send_api_request}
-\title{Send API Request}
+\title{Send API Request to a Specified URL}
 \usage{
-send_api_request(url, verbosity = TRUE)
+send_api_request(
+  url,
+  method = "GET",
+  body = NULL,
+  encode = "json",
+  content_type = "application/json",
+  verbosity = TRUE
+)
 }
 \arguments{
-\item{url}{A string representing the API endpoint URL.}
+\item{url}{A string representing the target URL for the API request.}
 
-\item{verbosity}{A boolean flag to indicate whether to print status messages.}
+\item{method}{A string specifying the HTTP method to use. The default is "GET", but "POST" can also be used.}
+
+\item{body}{Optional: The body of the request, typically required for POST requests. Default is \code{NULL}.}
+
+\item{encode}{A string representing the encoding type of the body for POST requests. Default is \code{"json"}.}
+
+\item{content_type}{A string specifying the content type for POST requests. Default is \code{"application/json"}.}
+
+\item{verbosity}{Logical flag indicating whether to print status messages during the function execution. Default is \code{TRUE}.}
 }
 \value{
-An HTTP response object.
+A response object from the \code{httr} package representing the server's response to the API request.
 }
 \description{
-This function sends an HTTP GET request to the specified URL and handles
-any potential errors related to network issues or API failures.
+This function sends an HTTP request (GET or POST) to the specified URL. It supports optional request bodies for POST requests, customizable encoding, and content type for API interactions. The function is designed to be a general-purpose API handler for use in querying external APIs.
+}
+\details{
+The \code{send_api_request} function is a flexible tool for handling API interactions. It supports both GET and POST methods and provides optional parameters for encoding and content type, making it suitable for a wide range of API requests.
+
+If a network error occurs during the request, the function will throw an error with a detailed message about the failure.
 }

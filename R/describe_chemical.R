@@ -3,6 +3,7 @@
 #' Retrieves detailed information about a chemical compound from the RCSB Protein Data Bank (PDB) based on its chemical ID.
 #'
 #' @param chem_id A string representing the 3-character chemical ID. This ID is typically an alphanumeric string used to uniquely identify ligands, cofactors, or other small molecules within macromolecular structures. The string must not exceed 3 characters.
+#' @param url_root A string representing the URL for retrieving information about chemical compounds. By default, this is set to the global constant \code{URL_ROOT}, but users can specify a different URL if needed.
 #' @return A list containing detailed information about the chemical compound. This list includes various fields such as:
 #' \describe{
 #'   \item{rcsb_chem_comp_descriptor}{A sublist containing chemical descriptors like SMILES, InChI strings, molecular weight, and other chemical properties.}

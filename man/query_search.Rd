@@ -2,7 +2,7 @@
 % Please edit documentation in R/query_search.R
 \name{query_search}
 \alias{query_search}
-\title{Perform a Search Query Against the RCSB Protein Data Bank}
+\title{Search Query Function}
 \usage{
 query_search(
   search_term,
@@ -10,89 +10,48 @@ query_search(
   return_type = "entry",
   scan_params = NULL,
   num_attempts = 1,
-  sleep_time = 0.5,
-  search_url = SEARCH_URL
+  sleep_time = 0.5
 )
 }
 \arguments{
-\item{search_term}{A string specifying the term to search in the PDB database. This could be a keyword, PubMed ID,
-taxonomy ID, experimental method, author name, or other searchable terms depending on the `query_type`.}
+\item{search_term}{A string specifying the term to search in the database.}
 
-\item{query_type}{A string specifying the type of query to perform. Supported values include:
-\describe{
-  \item{\code{"full_text"}}{Performs a full-text search across all entries. Default query type.}
-  \item{\code{"PubmedIdQuery"}}{Searches for entries associated with a specific PubMed ID.}
-  \item{\code{"TreeEntityQuery"}}{Searches for entries based on NCBI Taxonomy ID.}
-  \item{\code{"ExpTypeQuery"}}{Searches for entries based on the experimental method used, such as "X-RAY DIFFRACTION".}
-  \item{\code{"AdvancedAuthorQuery"}}{Searches for entries based on author names.}
-  \item{\code{"OrganismQuery"}}{Searches for entries based on organism names.}
-  \item{\code{"pfam"}}{Searches for entries based on Pfam IDs.}
-  \item{\code{"uniprot"}}{Searches for entries based on UniProt IDs.}
-}
-Default is \code{"full_text"}.}
+\item{query_type}{A string specifying the type of query to perform.
+Supported values include "full_text", "PubmedIdQuery",
+"TreeEntityQuery", "ExpTypeQuery", "AdvancedAuthorQuery",
+"OrganismQuery", "pfam", and "uniprot". Default is "full_text".}
 
 \item{return_type}{A string specifying the type of search result to return.
-Possible values are:
-\describe{
-  \item{\code{"entry"}}{Returns a list of PDB entry identifiers that match the search criteria. Default.}
-  \item{\code{"polymer_entity"}}{Returns detailed information about polymer entities that match the search criteria.}
-}}
+Possible values are "entry" (default) and "polymer_entity".}
 
-\item{scan_params}{Additional parameters for the scan, provided as a list. This is usually \code{NULL} by default and
-typically only used for advanced queries where specific request options need to be defined.}
+\item{scan_params}{Additional parameters for the scan, provided as a list.
+This is `NULL` by default and typically only used for advanced queries.}
 
-\item{num_attempts}{An integer specifying the number of attempts to try the query in case of failure due to network issues
-or temporary server unavailability. Default is 1 attempt.}
+\item{num_attempts}{An integer specifying the number of attempts to try the query in case of failure.}
 
-\item{sleep_time}{A numeric value specifying the time in seconds to wait between attempts if the query fails and multiple
-attempts are specified. Default is 0.5 seconds.}
-
-\item{search_url}{A string representing the base URL for the FASTA retrieval. By default, this is set to the global constant \code{SEARCH_URL}, but users can specify a different URL if needed.}
+\item{sleep_time}{A numeric value specifying the time in seconds to wait between attempts.}
 }
 \value{
-Depending on the \code{return_type} specified, the function either returns:
-  \describe{
-    \item{PDB IDs:}{A list of PDB entry identifiers if \code{return_type} is \code{"entry"}.}
-    \item{Full Response:}{The complete response object from the API if \code{return_type} is \code{"polymer_entity"}.}
-  }
-  If the query fails, the function returns \code{NULL}.
+Depending on the return_type, it either returns a list of PDB IDs (if "entry")
+        or the full response from the API.
 }
 \description{
-This function allows users to search the RCSB Protein Data Bank (PDB) using various query types.
-This function interacts with the RCSB PDB's REST API to retrieve data based on the provided search term and query type.
-It supports different query modes, including full-text search, PubMed ID, organism query, and more.
-}
-\details{
-The `query_search` function is a powerful tool for querying the RCSB PDB using a variety of search criteria.
-Depending on the specified \code{query_type}, the function will adjust the search parameters and endpoint used.
-For instance, a \code{"full_text"} query will search across all text fields in the PDB entries, whereas a
-\code{"TreeEntityQuery"} will specifically search based on taxonomy IDs.
-
-The function includes robust error handling to manage network issues and invalid input scenarios.
-For example, if an unsupported \code{query_type} is provided, the function will stop execution with an informative error message.
-Similarly, if the search term does not match any entries or if the server fails to return a response,
-the function will attempt the request a specified number of times before returning \code{NULL}.
-
-Users can customize the behavior of the search by adjusting the \code{scan_params},
-\code{num_attempts}, and \code{sleep_time} parameters to fine-tune the query execution.
+This function performs a search query against the RCSB Protein Data Bank
+using their REST API. It allows for various types of searches based on the provided parameters.
 }
 \examples{
+# Get a list of PDBs for a specific search term
 \donttest{
-# Example 1: Get a list of PDBs for a specific search term using full-text search
 pdbs <- query_search("ribosome")
 head(pdbs)
 
-# Example 2: Search by PubMed ID Number
-pdbs_by_pubmedid <- query_search(search_term = "27499440", query_type = "PubmedIdQuery")
+# Search by PubMed ID Number
+pdbs_by_pubmedid <- query_search(search_term = 27499440, query_type = "PubmedIdQuery")
 head(pdbs_by_pubmedid)
 
-# Example 3: Search by source organism using NCBI Taxonomy ID
+# Search by source organism using NCBI TaxId
 pdbs_by_ncbi_taxid <- query_search(search_term = "6239", query_type = "TreeEntityQuery")
 head(pdbs_by_ncbi_taxid)
-
-# Example 4: Search for entries related to a specific experimental method
-pdbs_by_experiment <- query_search(search_term = "X-RAY DIFFRACTION", query_type = "ExpTypeQuery")
-head(pdbs_by_experiment)
 }
 
 }

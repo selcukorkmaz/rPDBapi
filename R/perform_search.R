@@ -166,7 +166,8 @@ perform_search <- function(search_operator, return_type = "ENTRY", request_optio
   return(results)
 }
 
-perform_search_with_graph <- function(query_object, return_type = "ENTRY", request_options = NULL, return_with_scores = FALSE, return_raw_json_dict = FALSE, verbosity = TRUE) {
+perform_search_with_graph <- function(query_object, return_type = "ENTRY", request_options = NULL, return_with_scores = FALSE,
+                                      return_raw_json_dict = FALSE, verbosity = TRUE, search_url_endpoint = SEARCH_URL_ENDPOINT) {
   # Validate return_type
   if (!return_type %in% c("ENTRY", "ASSEMBLY", "POLYMER_ENTITY", "NONPOLYMER_ENTITY", "POLYMER_INSTANCE", "NONPOLYMER_INSTANCE", "MOL_DEFINITION")) {
     stop("Invalid return_type '", return_type, "'. Supported types are: 'ENTRY', 'ASSEMBLY', 'POLYMER_ENTITY', 'NONPOLYMER_ENTITY', 'POLYMER_INSTANCE', 'NONPOLYMER_INSTANCE', 'MOL_DEFINITION'.")
@@ -205,7 +206,7 @@ perform_search_with_graph <- function(query_object, return_type = "ENTRY", reque
   response <- tryCatch(
     {
       POST(
-        url = SEARCH_URL_ENDPOINT,
+        url = search_url_endpoint,
         body = toJSON(rcsb_query_dict, auto_unbox = TRUE, pretty = TRUE),
         encode = "json",
         content_type("application/json")

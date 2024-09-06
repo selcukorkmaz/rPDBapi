@@ -4,10 +4,12 @@
 \alias{describe_chemical}
 \title{Describe Chemical Compound from RCSB PDB}
 \usage{
-describe_chemical(chem_id)
+describe_chemical(chem_id, url_root = URL_ROOT)
 }
 \arguments{
 \item{chem_id}{A string representing the 3-character chemical ID. This ID is typically an alphanumeric string used to uniquely identify ligands, cofactors, or other small molecules within macromolecular structures. The string must not exceed 3 characters.}
+
+\item{url_root}{A string representing the URL for retrieving information about chemical compounds. By default, this is set to the global constant \code{URL_ROOT}, but users can specify a different URL if needed.}
 }
 \value{
 A list containing detailed information about the chemical compound. This list includes various fields such as:

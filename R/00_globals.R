@@ -9,6 +9,8 @@ GRAPHQL_URL <- "https://data.rcsb.org/graphql?query="
 BASE_URL = "https://data.rcsb.org/rest/v1/"
 SEARCH_URL = "https://search.rcsb.org/rcsbsearch/v2/query?json="
 URL_ROOT =  "https://data.rcsb.org/rest/v1/core/chemcomp/"
+SEARCH_URL_ENDPOINT <- "https://search.rcsb.org/rcsbsearch/v2/query"
+
 
 PDB_API_CONFIG <- list(
   entry = "core/entry/",
@@ -44,7 +46,6 @@ DataType <- c(
   CHEMICAL_COMPONENT = "chem_comps"
 )
 
-SEARCH_URL_ENDPOINT <- "https://search.rcsb.org/rcsbsearch/v2/query"
 
 LogicalOperator <- c("AND" = "and", "OR" = "or")
 
