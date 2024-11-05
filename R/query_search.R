@@ -24,6 +24,7 @@
 #' @examples
 #' # Get a list of PDBs for a specific search term
 #' \donttest{
+#' # Search Functions by Specific Terms
 #' pdbs <- query_search("ribosome")
 #' head(pdbs)
 #'
@@ -34,6 +35,31 @@
 #' # Search by source organism using NCBI TaxId
 #' pdbs_by_ncbi_taxid <- query_search(search_term = "6239", query_type = "TreeEntityQuery")
 #' head(pdbs_by_ncbi_taxid)
+#'
+#' # Search by Experimental Method
+#' pdbs = query_search(search_term = 'SOLID-STATE NMR', query_type='ExpTypeQuery')
+#' head(pdbs)
+#'
+#' pdbs = query_search(search_term = '4HHB', query_type="structure")
+#' head(pdbs)
+#'
+#' ## Advanced Searches
+#'
+#' # Search by Author
+#' pdbs = query_search(search_term = 'Rzechorzek, N.J.', query_type='AdvancedAuthorQuery')
+#' head(pdbs)
+#'
+#' # Search by Organism
+#' pdbs = query_search(search_term = "Escherichia coli", query_type="OrganismQuery")
+#' head(pdbs)
+#'
+#' # Search by Uniprot ID (Escherichia coli beta-lactamase)
+#' pdbs = query_search(search_term = "P0A877", query_type="uniprot")
+#' head(pdbs)
+#'
+#' # Search by PFAM number (protein kinase domain)
+#' pdbs = query_search(search_term = "PF00069", query_type="pfam")
+#' head(pdbs)
 #' }
 #'
 #' @export

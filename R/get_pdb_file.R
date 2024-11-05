@@ -52,6 +52,82 @@
 #'   # Download a PDB file, save it, and remove alternate location records
 #'   pdb_file <- get_pdb_file(pdb_id = "4HHB", filetype = "pdb", save = TRUE, path = tempdir())
 #'
+#'   # Understanding the tertiary structure of proteins is
+#'   # crucial for elucidating their functional mechanisms,
+#'   # especially in the context of ligand binding, enzyme catalysis,
+#'   # and protein-protein interactions.
+#'   # The tertiary structure refers to the three-dimensional arrangement
+#'   # of all atoms within a protein,
+#'   # including its secondary structure elements like alpha helices
+#'   # and beta sheets, and how these elements
+#'   # are organized in space. Using the get_pdb_file function
+#'   # to retrieve the PDB file and the r3dmol
+#'   # package for visualization, researchers can gain insights
+#'   # into the overall 3D structure of a protein.
+#'   # The following example demonstrates how to visualize the
+#'   # ltertiary structure of a protein using the
+#'   # PDB entry 1XYZ:
+#'
+# Load necessary libraries
+#'   library(r3dmol)
+#'
+#'   # Retrieve and parse a PDB structure
+#'   pdb_path <- get_pdb_file("1XYZ", filetype = "pdb", save = TRUE)
+#'
+#'   # Visualize the tertiary structure using r3dmol
+#'   viewer <- r3dmol() %>%
+#'     m_add_model(pdb_path$path, format = "pdb") %>%  # Load the PDB file
+#'     m_set_style(style = m_style_cartoon()) %>%  # Cartoon representation
+#'     m_zoom_to()
+#'
+#'   # Display the molecular viewer
+#'   viewer
+
+#'   # In this example, the protein structure is represented
+#'   # in a cartoon style, which is particularly
+#'   # effective for visualizing the overall fold of the protein,
+#'   # including the orientation and interaction
+#'   # of its secondary structure elements.
+#'   #. To further enhance the analysis,
+#'   # it is often important to
+#'   # highlight specific regions of interest,
+#'   # such as potential ligand-binding sites.
+#'   # These sites can be identified based on prior knowledge,
+#'   # experimental data, or computational predictions.
+#'   # The following code snippet demonstrates
+#'   # how to highlight potential ligand-binding sites in the
+#'   # protein structure:
+#'
+#'   # Highlight potential ligand-binding sites
+#'   # Note: Manually define residues of interest based
+#'   # on prior knowledge or external analysis
+#'   binding_sites <- c(45, 60, 85)  # Example residue numbers
+#'
+#'   viewer <- viewer %>%
+#'     m_set_style(
+#'       sel = m_sel(resi = binding_sites),
+#'       style = m_style_sphere(color = "red", radius = 1.5)
+#'     )
+#'
+#'   # Display the updated viewer with highlighted binding sites
+#'   viewer
+#'
+#'   # In this step, specific residues that are
+#'   # hypothesized to participate in ligand binding are
+#'   #highlighted using a spherical representation.
+#'   # The residues are selected manually based on either
+#'   # experimental data or computational predictions.
+#'   # By highlighting these sites, researchers can
+#'   # visually inspect the spatial relationship between
+#'   # these residues and other parts of the protein,
+#'   # which may provide insights into the
+#'   # protein's functional mechanisms.
+#'
+#'   # This visualization approach offers a powerful
+#'   # way to explore and communicate the 3D structure
+#'   # of proteins, making it easier to hypothesize about their function and
+#'   # interaction with other molecules.
+#'
 #' }
 #' @details
 #' The `get_pdb_file` function is an essential tool for structural biologists and bioinformaticians who need to download and
