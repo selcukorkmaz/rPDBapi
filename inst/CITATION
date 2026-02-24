@@ -1,0 +1,17 @@
+citHeader("To cite rPDBapi in publications use:")
+
+bibentry(
+  bibtype = "Article",
+  title   = "rPDBapi: A Comprehensive R Package Interface for Accessing the Protein Data Bank.",
+  author  = c(
+    person("Selcuk", "Korkmaz"),
+    person("Bilge Eren", "Yamasan")
+  ),
+  journal = "The R Journal",
+  year    = "2025",
+  volume  = "17",
+  number  = "2",
+  pages   = "109--145",
+  url     = "https://journal.r-project.org/articles/RJ-2025-016/RJ-2025-016.pdf",
+  textVersion = "Korkmaz S, Yamasan BE. rPDBapi: A Comprehensive R Package Interface for Accessing the Protein Data Bank. The R Journal. 2025; 17(2):109-145."
+)
