@@ -43,15 +43,29 @@ add_property <- function(property) {
     stop("Property must be a list.")
   }
 
-  for (key in names(property)) {
-    # if (!is.character(property[[key]])) {
-    #   stop("Property values must be character vectors.")
-    # }
-    if (!key %in% names(property)) {
-      property[[key]] <- character()
-    }
-    property[[key]] <- unique(c(property[[key]], property[[key]]))
+  if (length(property) == 0) {
+    return(property)
   }
 
-  return(property)
+  if (is.null(names(property)) || any(names(property) == "")) {
+    stop("Each property must be a named list element.")
+  }
+
+  merged_property <- list()
+
+  for (idx in seq_along(property)) {
+    key <- names(property)[idx]
+    value <- property[[idx]]
+
+    if (length(value) == 0) {
+      value <- character()
+    } else if (is.list(value)) {
+      value <- unlist(value, use.names = FALSE)
+    }
+    value <- as.character(value)
+
+    merged_property[[key]] <- unique(c(merged_property[[key]], value))
+  }
+
+  return(merged_property)
 }

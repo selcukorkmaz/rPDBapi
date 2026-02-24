@@ -8,6 +8,22 @@ test_that("data_fetcher returns correct structure", {
 
   ids <- c("NAG", "EBW")
 
+  local_mocked_bindings(
+    generate_json_query = function(ids, data_type, properties) {
+      "mock_query"
+    },
+    fetch_data = function(json_query, data_type, ids) {
+      list(data = list(list(
+        NAG = list(rcsb_id = "NAG"),
+        EBW = list(rcsb_id = "EBW")
+      )))
+    },
+    return_data_as_dataframe = function(response, data_type, ids) {
+      data.frame(rcsb_id = ids, stringsAsFactors = FALSE)
+    },
+    .package = "rPDBapi"
+  )
+
   result <- data_fetcher(
     id = ids,
     data_type = "CHEMICAL_COMPONENT",
@@ -15,7 +31,7 @@ test_that("data_fetcher returns correct structure", {
     return_as_dataframe = TRUE
   )
 
-  expect_type(result, "list")
+  expect_s3_class(result, "data.frame")
   expect_true("rcsb_id" %in% names(result))
   expect_equal(result$rcsb_id, ids)
 })

@@ -1,5 +1,6 @@
 # Testing query_search
 test_that("query_search returns correct PDB IDs for search term", {
+  skip_if_not_live_tests()
   result <- query_search("ribosome")
 
   expect_type(result, "character")

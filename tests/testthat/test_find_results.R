@@ -1,5 +1,6 @@
 # Testing find_papers
 test_that("find_papers returns correct paper titles", {
+  skip_if_not_live_tests()
   result <- find_papers("ribosome", max_results = 2)
 
   expect_type(result, "list")
@@ -9,6 +10,7 @@ test_that("find_papers returns correct paper titles", {
 
 # Testing find_results
 test_that("find_results returns correct field information", {
+  skip_if_not_live_tests()
   result <- find_results("crispr", field = "citation")
 
   expect_type(result, "list")

@@ -1,7 +1,4 @@
-#' Import testthat Package
-#' @noRd
-#' @import testthat
-NULL
+# Package-level global constants.
 
 FASTA_BASE_URL <- "https://www.rcsb.org/fasta/entry/"
 DOWNLOAD_BASE_URL <- "https://files.rcsb.org/download/"
@@ -54,7 +51,10 @@ ReturnType <- c(
   ASSEMBLY = "assembly",
   POLYMER_ENTITY = "polymer_entity",
   NONPOLYMER_ENTITY = "non_polymer_entity",
-  POLYMER_INSTANCE = "polymer_instance"
+  NON_POLYMER_ENTITY = "non_polymer_entity",
+  POLYMER_INSTANCE = "polymer_instance",
+  MOL_DEFINITION = "mol_definition",
+  CHEMICAL_COMPONENT = "mol_definition"
 )
 
 SearchService <- c(

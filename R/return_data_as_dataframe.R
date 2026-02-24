@@ -71,8 +71,8 @@ return_data_as_dataframe <- function(response, data_type, ids) {
       }
     }else{
 
-      for (name in length(lst)) {
-        top_element <- lst[[name]]
+      for (idx in seq_along(lst)) {
+        top_element <- lst[[idx]]
         # Create a new list for the top-level element
         simplified_top_element <- list()
 
@@ -89,7 +89,7 @@ return_data_as_dataframe <- function(response, data_type, ids) {
         }
 
         # Add the simplified top-level element to the result list
-        simplified_lst[[name]] <- simplified_top_element
+        simplified_lst[[idx]] <- simplified_top_element
       }
 
     }
@@ -218,11 +218,16 @@ return_data_as_dataframe <- function(response, data_type, ids) {
   # Find the common prefix in the column names, excluding 'ID'
   df <- remove_prefix(df)
 
-  if(identical(pull(df, 1), pull(df,2))){
+  if (ncol(df) >= 2) {
+    first_col_name <- colnames(df)[1]
+    first_col <- as.character(df[[1]])
+    second_col <- as.character(df[[2]])
+    id_like_first_col <- grepl("^ID(\\.\\.\\.[0-9]+)?$", first_col_name)
 
-
-    df <- df %>% select(-1)
-
+    # Drop only the synthetic ID column when it duplicates the first data column.
+    if (id_like_first_col && identical(first_col, second_col)) {
+      df <- df[, -1, drop = FALSE]
+    }
   }
 
 

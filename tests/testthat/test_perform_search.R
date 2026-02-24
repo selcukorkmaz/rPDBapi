@@ -1,5 +1,6 @@
 # Testing perform_search
 test_that("perform_search returns correct search results", {
+  skip_if_not_live_tests()
   search_operator <- DefaultOperator("4HHB")
   result <- perform_search(search_operator)
 

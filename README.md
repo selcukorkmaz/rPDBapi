@@ -95,6 +95,48 @@ head(pdb_file$atom)
 ## Documentation
 For more detailed examples and usage, please refer to the package documentation.
 
+## Output Contracts
+Core functions return typed objects to make downstream behavior explicit:
+
+* `query_search()`
+  * `return_type = "entry"`: character vector with class `rPDBapi_query_ids`
+  * otherwise: parsed payload with class `rPDBapi_query_response`
+* `perform_search()`
+  * default ID output: class `rPDBapi_search_ids`
+  * `return_with_scores = TRUE`: class `rPDBapi_search_scores`
+  * `return_raw_json_dict = TRUE`: class `rPDBapi_search_raw_response`
+* `fetch_data()`
+  * validated payload with class `rPDBapi_fetch_response`
+* `data_fetcher()`
+  * `return_as_dataframe = TRUE`: data frame with class `rPDBapi_dataframe`
+  * `return_as_dataframe = FALSE`: class `rPDBapi_fetch_response`
+
+Error signaling uses typed conditions (e.g., `rPDBapi_error_malformed_response`,
+`rPDBapi_error_unsupported_mapping`) for reliable programmatic handling.
+
+## Backward-Compatible Aliases
+* Search return types:
+  * `NONPOLYMER_ENTITY` and `NON_POLYMER_ENTITY` map to the same API return type.
+  * `CHEMICAL_COMPONENT` maps to `MOL_DEFINITION`.
+* Citation fields:
+  * `citation` and `rcsb_primary_citation` are resolved compatibly in
+    `find_results()` and `find_papers()`.
+
+## Testing
+By default, the test suite runs only deterministic unit tests (no network calls):
+
+```r
+Sys.setenv(RPDBAPI_RUN_LIVE = "false")
+testthat::test_dir("tests/testthat")
+```
+
+Live API integration tests are opt-in:
+
+```r
+Sys.setenv(RPDBAPI_RUN_LIVE = "true", NOT_CRAN = "true")
+testthat::test_dir("tests/testthat")
+```
+
 ## Authors
 * Selcuk Korkmaz - Trakya University, Department of Biostatistics
 * Bilge Eren Yamasan - Trakya University, Department of Biophysics

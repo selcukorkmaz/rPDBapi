@@ -67,6 +67,20 @@
 #' @export
 
 find_results <- function(search_term, field = "citation") {
+  resolve_field_name <- function(info, requested_field) {
+    if (requested_field == "citation" &&
+        !"citation" %in% names(info) &&
+        "rcsb_primary_citation" %in% names(info)) {
+      return("rcsb_primary_citation")
+    }
+    if (requested_field == "rcsb_primary_citation" &&
+        !"rcsb_primary_citation" %in% names(info) &&
+        "citation" %in% names(info)) {
+      return("citation")
+    }
+    requested_field
+  }
+
   # Retrieve search result IDs with enhanced error handling
   search_result_ids <- tryCatch(
     {
@@ -99,8 +113,9 @@ find_results <- function(search_term, field = "citation") {
     )
 
     if (!is.null(pdb_info)) {
-      if (field %in% names(pdb_info)) {
-        all_results[[search_result_ids[i]]] <- pdb_info[[field]]
+      resolved_field <- resolve_field_name(pdb_info, field)
+      if (resolved_field %in% names(pdb_info)) {
+        all_results[[search_result_ids[i]]] <- pdb_info[[resolved_field]]
       } else {
         warning("Field '", field, "' not found in the information retrieved for PDB ID '", search_result_ids[i], "'.")
       }

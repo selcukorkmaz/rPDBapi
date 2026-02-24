@@ -141,6 +141,7 @@ get_pdb_file <- function(pdb_id, filetype = 'cif', rm.insert = FALSE, rm.alt = T
                          save = FALSE, path = NULL, verbosity = TRUE, download_base_url = DOWNLOAD_BASE_URL) {
 
   cl <- match.call()
+  is_structfact <- identical(filetype, "structfact")
 
   # Validate the input filetype
   if (!filetype %in% c('cif', 'pdb', 'xml', 'structfact')) {
@@ -183,13 +184,19 @@ get_pdb_file <- function(pdb_id, filetype = 'cif', rm.insert = FALSE, rm.alt = T
   )
 
   # Set the download path
+  filename <- if (is_structfact) {
+    paste0(pdb_id, "-sf.cif")
+  } else {
+    paste0(pdb_id, ".", filetype, ifelse(compression, ".gz", ""))
+  }
+
   if (is.null(path)) {
-    path <- file.path(tempdir(), paste0(pdb_id, ".", filetype, ifelse(compression, ".gz", "")))
+    path <- file.path(tempdir(), filename)
   } else {
     if (!dir.exists(path)) {
       stop("Specified path does not exist: ", path)
     }
-    path <- file.path(path, paste0(pdb_id, ".", filetype, ifelse(compression, ".gz", "")))
+    path <- file.path(path, filename)
   }
 
   # Save the downloaded file
@@ -207,7 +214,7 @@ get_pdb_file <- function(pdb_id, filetype = 'cif', rm.insert = FALSE, rm.alt = T
     {
       if (filetype == 'pdb') {
         read.pdb(path)
-      } else if (filetype == 'cif') {
+      } else if (filetype %in% c('cif', 'structfact')) {
         read.cif(path)
       } else if (filetype == 'xml') {
         xml_file <- read_xml(path)
@@ -231,8 +238,8 @@ get_pdb_file <- function(pdb_id, filetype = 'cif', rm.insert = FALSE, rm.alt = T
     return(NULL)
   }
 
-  # Process the result if not XML
-  if (filetype != "xml") {
+  # Process only coordinate-bearing formats.
+  if (filetype %in% c("pdb", "cif")) {
     if (!is.null(result$error)) {
       stop("Error encountered in reading the file: ", path)
     } else {

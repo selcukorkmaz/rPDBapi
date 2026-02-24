@@ -11,9 +11,9 @@
 #' it can provide context for the data being retrieved, such as "ENTRY", "ASSEMBLY", "POLYMER_ENTITY", etc.
 #' @param ids A character vector of identifiers for which data is being requested. These IDs should correspond to valid entries in
 #' the PDB and should match the data structure expected by the PDB's API.
-#' @return A list containing the data fetched from the PDB, with the names of the list elements set to the corresponding IDs.
-#' If any issues occur during the fetching process (e.g., if some IDs are not found), the function will return `NULL` and provide
-#' informative error messages to help diagnose the problem.
+#' @return A list with class \code{"rPDBapi_fetch_response"} containing the fetched
+#' payload under \code{$data}. The list entries are validated and normalized to the
+#' requested \code{ids}. Malformed responses raise typed errors.
 #'
 #' @details
 #' The function performs several checks and operations:
@@ -40,7 +40,11 @@ fetch_data <- function(json_query, data_type, ids) {
     if (!is.null(details)) {
       full_message <- paste0(full_message, " Details: ", details)
     }
-    stop(full_message)
+    rpdbapi_abort(
+      full_message,
+      class = "rPDBapi_error_malformed_response",
+      function_name = "fetch_data"
+    )
   }
 
   # Validate the JSON query
@@ -70,17 +74,53 @@ fetch_data <- function(json_query, data_type, ids) {
     log_error("The query returned errors. Please review the error messages above.")
   }
 
-  # Verify if the expected IDs match the returned data
-  if (length(response$data[[1]]) != length(ids)) {
-    warning("Mismatch in the number of returned data entries and the provided IDs.")
-    missing_ids <- setdiff(ids, names(response$data[[1]]))
-    if (length(missing_ids) > 0) {
-      warning("The following IDs were not found: ", paste(missing_ids, collapse = ", "))
-    }
-    log_error("One or more IDs could not be retrieved. Please check the IDs and try again.")
-  } else {
-    names(response$data[[1]]) <- ids
+  # Normalize and validate returned data IDs.
+  returned_data <- response$data[[1]]
+  if (is.null(returned_data) || !is.list(returned_data)) {
+    log_error("Malformed response payload: expected a list under response$data[[1]].")
   }
+
+  returned_names <- names(returned_data)
+  if (is.null(returned_names) || any(returned_names == "")) {
+    warning("Unnamed response entries were normalized by position against requested IDs.")
+
+    if (length(returned_data) < length(ids)) {
+      warning("Mismatch in the number of returned data entries and the provided IDs.")
+      missing_ids <- ids[seq.int(length(returned_data) + 1, length(ids))]
+      if (length(missing_ids) > 0) {
+        warning("The following IDs were not found: ", paste(missing_ids, collapse = ", "))
+      }
+      log_error("One or more IDs could not be retrieved. Please check the IDs and try again.")
+    }
+
+    if (length(returned_data) > length(ids)) {
+      warning("More entries were returned than requested IDs; truncating extras to requested IDs.")
+      returned_data <- returned_data[seq_along(ids)]
+    }
+
+    names(returned_data) <- ids[seq_along(returned_data)]
+  } else {
+    extra_ids <- setdiff(returned_names, ids)
+    if (length(extra_ids) > 0) {
+      warning("Ignoring unrequested IDs returned by API: ", paste(extra_ids, collapse = ", "))
+    }
+
+    missing_ids <- setdiff(ids, returned_names)
+    if (length(missing_ids) > 0) {
+      warning("Mismatch in the number of returned data entries and the provided IDs.")
+      warning("The following IDs were not found: ", paste(missing_ids, collapse = ", "))
+      log_error("One or more IDs could not be retrieved. Please check the IDs and try again.")
+    }
+
+    # Keep only requested IDs and preserve input order.
+    returned_data <- returned_data[ids]
+    names(returned_data) <- ids
+  }
+
+  response$data[[1]] <- returned_data
+  response <- rpdbapi_add_class(response, "rPDBapi_fetch_response")
+  attr(response, "ids") <- ids
+  attr(response, "data_type") <- data_type
 
   return(response)
 }

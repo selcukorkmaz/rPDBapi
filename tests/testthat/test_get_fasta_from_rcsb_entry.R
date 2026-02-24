@@ -2,6 +2,7 @@
 
 # Testing get_fasta_from_rcsb_entry
 test_that("get_fasta_from_rcsb_entry returns correct FASTA sequences", {
+  skip_if_not_live_tests()
   result <- get_fasta_from_rcsb_entry("4HHB")
 
   expect_type(result, "list")
@@ -10,6 +11,7 @@ test_that("get_fasta_from_rcsb_entry returns correct FASTA sequences", {
 })
 
 test_that("get_fasta_from_rcsb_entry returns correct chain sequence", {
+  skip_if_not_live_tests()
   result <- get_fasta_from_rcsb_entry("4HHB", chain_id = "A")
 
   expect_type(result, "character")

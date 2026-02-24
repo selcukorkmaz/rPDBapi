@@ -58,6 +58,10 @@
 #'   \item{\code{POLYMER_INSTANCE}}{A list of PDB IDs with appended asym IDs for specific polymer instances.}
 #'   \item{\code{CHEMICAL_COMPONENT}}{A list of chemical component identifiers.}
 #' }
+#' For identifier output, the vector is tagged with class \code{"rPDBapi_search_ids"}.
+#' When \code{return_with_scores = TRUE}, returned results are tagged with class
+#' \code{"rPDBapi_search_scores"}. Raw JSON responses are tagged with class
+#' \code{"rPDBapi_search_raw_response"}.
 #'
 #' @importFrom httr POST
 #' @importFrom jsonlite toJSON
@@ -160,7 +164,14 @@ perform_search <- function(search_operator, return_type = "ENTRY", request_optio
       )
     },
     error = function(e) {
-      stop("Failed to fetch data from the RCSB database: ", e$message)
+      if (inherits(e, "rPDBapi_error")) {
+        stop(e)
+      }
+      rpdbapi_abort(
+        paste0("Failed to fetch data from the RCSB database: ", e$message),
+        class = "rPDBapi_error_request_failed",
+        function_name = "perform_search"
+      )
     }
   )
   return(results)
@@ -169,8 +180,17 @@ perform_search <- function(search_operator, return_type = "ENTRY", request_optio
 perform_search_with_graph <- function(query_object, return_type = "ENTRY", request_options = NULL, return_with_scores = FALSE,
                                       return_raw_json_dict = FALSE, verbosity = TRUE, search_url_endpoint = SEARCH_URL_ENDPOINT) {
   # Validate return_type
-  if (!return_type %in% c("ENTRY", "ASSEMBLY", "POLYMER_ENTITY", "NONPOLYMER_ENTITY", "POLYMER_INSTANCE", "NONPOLYMER_INSTANCE", "MOL_DEFINITION")) {
-    stop("Invalid return_type '", return_type, "'. Supported types are: 'ENTRY', 'ASSEMBLY', 'POLYMER_ENTITY', 'NONPOLYMER_ENTITY', 'POLYMER_INSTANCE', 'NONPOLYMER_INSTANCE', 'MOL_DEFINITION'.")
+  supported_return_types <- names(ReturnType)
+  if (!return_type %in% supported_return_types) {
+    rpdbapi_abort(
+      paste0(
+        "Invalid return_type '", return_type, "'. Supported types are: '",
+        paste(supported_return_types, collapse = "', '"), "'."
+      ),
+      class = "rPDBapi_error_unsupported_mapping",
+      function_name = "perform_search_with_graph",
+      return_type = return_type
+    )
   }
 
   # Cast query object if necessary
@@ -199,6 +219,15 @@ perform_search_with_graph <- function(query_object, return_type = "ENTRY", reque
     return_type = ReturnType[[return_type]]
   )
 
+  if (is.null(rcsb_query_dict$return_type)) {
+    rpdbapi_abort(
+      paste0("Internal mapping error: no API return_type mapping found for '", return_type, "'."),
+      class = "rPDBapi_error_unsupported_mapping",
+      function_name = "perform_search_with_graph",
+      return_type = return_type
+    )
+  }
+
   if (verbosity) {
     message("Querying RCSB Search with the following parameters:\n", toJSON(rcsb_query_dict, auto_unbox = TRUE, pretty = TRUE))
   }
@@ -207,7 +236,7 @@ perform_search_with_graph <- function(query_object, return_type = "ENTRY", reque
     {
       POST(
         url = search_url_endpoint,
-        body = toJSON(rcsb_query_dict, auto_unbox = TRUE, pretty = TRUE),
+        body = rcsb_query_dict,
         encode = "json",
         content_type("application/json")
       )
@@ -239,7 +268,16 @@ perform_search_with_graph <- function(query_object, return_type = "ENTRY", reque
     }
   )
 
+  if (!is.list(response_json) || is.null(response_json$result_set)) {
+    rpdbapi_abort(
+      "Malformed search response: missing 'result_set'.",
+      class = "rPDBapi_error_malformed_response",
+      function_name = "perform_search_with_graph"
+    )
+  }
+
   if (return_raw_json_dict) {
+    response_json <- rpdbapi_add_class(response_json, "rPDBapi_search_raw_response")
     return(response_json)
   }
 
@@ -257,7 +295,18 @@ perform_search_with_graph <- function(query_object, return_type = "ENTRY", reque
   )
 
   if (is.null(results)) {
-    stop("No results were found for the given query. Please check your search criteria.")
+    rpdbapi_abort(
+      "No results were found for the given query. Please check your search criteria.",
+      class = "rPDBapi_error_malformed_response",
+      function_name = "perform_search_with_graph"
+    )
+  }
+
+  if (return_with_scores) {
+    results <- rpdbapi_add_class(results, "rPDBapi_search_scores")
+  } else {
+    results <- as.character(results)
+    results <- rpdbapi_add_class(results, "rPDBapi_search_ids")
   }
 
   return(results)

@@ -15,8 +15,10 @@
 #' @param num_attempts An integer specifying the number of attempts to try the query in case of failure.
 #' @param sleep_time A numeric value specifying the time in seconds to wait between attempts.
 #'
-#' @return Depending on the return_type, it either returns a list of PDB IDs (if "entry")
-#'         or the full response from the API.
+#' @return
+#' If \code{return_type = "entry"}, returns a character vector of identifiers with class
+#' \code{"rPDBapi_query_ids"}. Otherwise returns the parsed API payload with class
+#' \code{"rPDBapi_query_response"}.
 #'
 #' @importFrom httr POST content content_type
 #' @importFrom jsonlite toJSON fromJSON
@@ -142,22 +144,42 @@ query_search <- function(search_term, query_type = "full_text", return_type = "e
     }
   }
 
-  # Define the base query parameters
-  scan_params <- list(query = query_params, return_type = return_type, request_options = list(results_verbosity = "verbose"))
+  # Define default query parameters and allow user-provided overrides.
+  default_scan_params <- list(
+    query = query_params,
+    return_type = return_type,
+    request_options = list(results_verbosity = "verbose")
+  )
+  if (is.null(scan_params)) {
+    scan_params <- default_scan_params
+  } else {
+    if (!is.list(scan_params)) {
+      rpdbapi_abort(
+        "Invalid scan_params: expected a list.",
+        class = "rPDBapi_error_invalid_input",
+        function_name = "query_search"
+      )
+    }
+    scan_params <- utils::modifyList(default_scan_params, scan_params, keep.null = TRUE)
+  }
+
+  # Keep response parsing and request return_type in sync with the function argument.
+  scan_params$return_type <- return_type
 
   # Additional handling for 'entry' return type
-  if (return_type == "entry") {
+  if (is.null(scan_params$request_options)) {
+    scan_params$request_options <- list()
+  }
+  if (return_type == "entry" && is.null(scan_params$request_options$return_all_hits)) {
     scan_params$request_options$return_all_hits <- TRUE
   }
 
   url <- "https://search.rcsb.org/rcsbsearch/v2/query?json="
 
-  query_text <- toJSON(scan_params, auto_unbox = TRUE, pretty = TRUE)
-
   for (attempt in 1:num_attempts) {
     response <- tryCatch(
       {
-        POST(url, body = query_text, encode = "json", content_type("application/json"))
+        POST(url, body = scan_params, encode = "json", content_type("application/json"))
       },
       error = function(e) {
         warning("HTTP request failed on attempt ", attempt, ": ", e$message)
@@ -172,14 +194,43 @@ query_search <- function(search_term, query_type = "full_text", return_type = "e
             fromJSON(content(response, "text", encoding = "UTF-8"))
           },
           error = function(e) {
-            stop("Parsing Error: The server response could not be parsed. Please check the validity of the search term '", search_term, "' and try again.")
+            rpdbapi_abort(
+              paste0(
+                "Parsing Error: The server response could not be parsed. ",
+                "Please check the validity of the search term '", search_term, "' and try again."
+              ),
+              class = "rPDBapi_error_malformed_response",
+              function_name = "query_search"
+            )
           }
         )
 
         if (return_type == "entry") {
           idlist <- walk_nested_dict(response_val, "identifier", maxdepth = 25, outputs = list())
-          return(idlist[[1]])
+          if (is.null(idlist) || length(idlist) == 0 || is.null(idlist[[1]])) {
+            rpdbapi_abort(
+              "Malformed search response: missing 'identifier' values.",
+              class = "rPDBapi_error_malformed_response",
+              function_name = "query_search"
+            )
+          }
+
+          ids <- as.character(idlist[[1]])
+          ids <- ids[!is.na(ids) & nzchar(ids)]
+          if (length(ids) == 0) {
+            rpdbapi_abort(
+              "Malformed search response: empty identifier set.",
+              class = "rPDBapi_error_malformed_response",
+              function_name = "query_search"
+            )
+          }
+
+          ids <- rpdbapi_add_class(ids, "rPDBapi_query_ids")
+          attr(ids, "return_type") <- "entry"
+          return(ids)
         } else {
+          response_val <- rpdbapi_add_class(response_val, "rPDBapi_query_response")
+          attr(response_val, "return_type") <- return_type
           return(response_val)
         }
       } else {

@@ -1,5 +1,6 @@
 # Testing get_pdb_file
 test_that("get_pdb_file downloads and parses the PDB file correctly", {
+  skip_if_not_live_tests()
   result <- get_pdb_file("4HHB", filetype = "pdb", save = FALSE)
 
   expect_type(result, "list")

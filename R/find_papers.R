@@ -38,6 +38,16 @@
 #' @export
 
 find_papers <- function(search_term, max_results = 10) {
+  get_citation_title <- function(info) {
+    if ("citation" %in% names(info) && !is.null(info$citation$title)) {
+      return(info$citation$title[1])
+    }
+    if ("rcsb_primary_citation" %in% names(info) && !is.null(info$rcsb_primary_citation$title)) {
+      return(info$rcsb_primary_citation$title[1])
+    }
+    NULL
+  }
+
   all_papers <- list()
 
   # Error handling for the query search
@@ -72,8 +82,9 @@ find_papers <- function(search_term, max_results = 10) {
     )
 
     if (!is.null(pdb_info)) {
-      if ("citation" %in% names(pdb_info)) {
-        all_papers[[pdbIds[i]]] <- pdb_info$citation$title[1]
+      title <- get_citation_title(pdb_info)
+      if (!is.null(title)) {
+        all_papers[[pdbIds[i]]] <- title
       } else {
         warning("Citation field not found for PDB ID '", pdbIds[i], "'.")
       }

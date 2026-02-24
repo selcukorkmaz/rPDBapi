@@ -25,7 +25,10 @@
 #' @param return_as_dataframe A boolean indicating whether to return the response as a dataframe. If \code{TRUE}, the data is returned in a structured dataframe format, which is convenient for analysis and manipulation in R. If \code{FALSE}, the data is returned in its original format, which may be a nested list or JSON-like structure. Default is \code{TRUE}.
 #' @param verbosity A boolean flag indicating whether to print status messages during the function execution. When set to \code{TRUE}, the function will output messages detailing the progress and any issues encountered.
 #'
-#' @return Depending on the value of \code{return_as_dataframe}, this function returns either a dataframe or the raw data in its original format. The dataframe format is particularly useful for further data analysis and visualization within R, while the raw format may be preferred for more complex or custom data processing tasks.
+#' @return
+#' If \code{return_as_dataframe = TRUE}, returns a data frame tagged with class
+#' \code{"rPDBapi_dataframe"}. Otherwise returns a validated raw payload tagged with
+#' class \code{"rPDBapi_fetch_response"}.
 #'
 #' @details The `data_fetcher` function is particularly useful for researchers who need to access and analyze specific subsets of PDB data. By providing a list of IDs and the corresponding data type, users can retrieve only the information relevant to their study, reducing the need to manually filter or process large datasets. The function also supports fetching multiple properties simultaneously, allowing for a more comprehensive data retrieval process.
 #'
@@ -83,18 +86,30 @@ data_fetcher <- function(id = NULL, data_type = "ENTRY", properties = NULL, retu
 
   # Validate input parameters
   if (is.null(id) || length(id) == 0) {
-    stop("Invalid input: 'id' must not be NULL or empty.")
+    rpdbapi_abort(
+      "Invalid input: 'id' must not be NULL or empty.",
+      class = "rPDBapi_error_invalid_input",
+      function_name = "data_fetcher"
+    )
   }
 
   if (!data_type %in% c("ENTRY", "POLYMER_ENTITY", "BRANCHED_ENTITY",  "ASSEMBLY", "NONPOLYMER_ENTITY",
                         "POLYMER_ENTITY_INSTANCE", "BRANCHED_ENTITY_INSTANCE", "NONPOLYMER_ENTITY_INSTANCE", "CHEMICAL_COMPONENT")) {
-    stop("Invalid 'data_type'. Please provide a valid data type from the following options:
+    rpdbapi_abort("Invalid 'data_type'. Please provide a valid data type from the following options:
            'ENTRY', 'POLYMER_ENTITY', 'BRANCHED_ENTITY', 'ASSEMBLY', 'NONPOLYMER_ENTITY',
-         'POLYMER_ENTITY_INSTANCE', 'BRANCHED_ENTITY_INSTANCE', 'NONPOLYMER_ENTITY_INSTANCE', 'CHEMICAL_COMPONENT.'")
+         'POLYMER_ENTITY_INSTANCE', 'BRANCHED_ENTITY_INSTANCE', 'NONPOLYMER_ENTITY_INSTANCE', 'CHEMICAL_COMPONENT.'",
+      class = "rPDBapi_error_invalid_input",
+      function_name = "data_fetcher",
+      data_type = data_type
+    )
   }
 
   if (is.null(properties) || length(properties) == 0) {
-    stop("Invalid input: 'properties' must not be NULL or empty.")
+    rpdbapi_abort(
+      "Invalid input: 'properties' must not be NULL or empty.",
+      class = "rPDBapi_error_invalid_input",
+      function_name = "data_fetcher"
+    )
   }
 
   # Add properties and generate query
@@ -140,6 +155,13 @@ data_fetcher <- function(id = NULL, data_type = "ENTRY", properties = NULL, retu
         stop("Failed to convert response to dataframe. Error: ", e$message)
       }
     )
+    response <- rpdbapi_add_class(response, "rPDBapi_dataframe")
+    attr(response, "data_type") <- data_type
+    attr(response, "ids") <- id
+  } else {
+    response <- rpdbapi_add_class(response, "rPDBapi_fetch_response")
+    attr(response, "data_type") <- data_type
+    attr(response, "ids") <- id
   }
 
   return(response)

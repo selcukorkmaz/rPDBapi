@@ -90,9 +90,6 @@ infer_search_service <- function(search_operator) {
 
   if ("DefaultOperator" %in% class(search_operator)) {
     return(SearchService[["BASIC_SEARCH"]])
-  }else{
-    if (!is.null(search_operator$operator) && (search_operator$operator %in% TextSearchOperator || is.list(search_operator))) {
-    return(SearchService[["TEXT"]])
   } else if ("SequenceOperator" %in% class(search_operator)) {
     return(SearchService[["SEQUENCE"]])
   } else if ("StructureOperator" %in% class(search_operator)) {
@@ -101,11 +98,18 @@ infer_search_service <- function(search_operator) {
     return(SearchService[["SEQMOTIF"]])
   } else if ("ChemicalOperator" %in% class(search_operator)) {
     return(SearchService[["CHEMICAL"]])
-  } else {
-    stop("Cannot infer Search Service for the provided search operator.")
   }
 
+  if (!is.null(search_operator$operator)) {
+    if (search_operator$operator %in% TextSearchOperator) {
+      return(SearchService[["TEXT"]])
+    }
+    if (search_operator$operator %in% unname(StructureSearchMode)) {
+      return(SearchService[["STRUCTURE"]])
+    }
   }
+
+  stop("Cannot infer Search Service for the provided search operator.")
 }
 
 #' Create a Query Node for RCSB PDB Searches
@@ -124,11 +128,15 @@ infer_search_service <- function(search_operator) {
 
 QueryNode <- function(search_operator, logical_operator = NULL) {
   if(!(is.null(search_operator$type)) && search_operator$type == "group"){
+    group_logical_operator <- search_operator$logical_operator
+    if (is.null(group_logical_operator) && !is.null(logical_operator)) {
+      group_logical_operator <- LogicalOperator[[logical_operator]]
+    }
 
     list(
       type = "group",
-      # logical_operator = LogicalOperator[[logical_operator]],  # Assuming this function is defined
-      nodes = search_operator            # Assuming search_operator has a to_dict method
+      logical_operator = group_logical_operator,
+      nodes = search_operator$nodes
     )
 
   }else{
