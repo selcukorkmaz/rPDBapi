@@ -32,8 +32,9 @@ This is `NULL` by default and typically only used for advanced queries.}
 \item{sleep_time}{A numeric value specifying the time in seconds to wait between attempts.}
 }
 \value{
-Depending on the return_type, it either returns a list of PDB IDs (if "entry")
-        or the full response from the API.
+If \code{return_type = "entry"}, returns a character vector of identifiers with class
+\code{"rPDBapi_query_ids"}. Otherwise returns the parsed API payload with class
+\code{"rPDBapi_query_response"}.
 }
 \description{
 This function performs a search query against the RCSB Protein Data Bank

@@ -18,9 +18,9 @@ it can provide context for the data being retrieved, such as "ENTRY", "ASSEMBLY"
 the PDB and should match the data structure expected by the PDB's API.}
 }
 \value{
-A list containing the data fetched from the PDB, with the names of the list elements set to the corresponding IDs.
-If any issues occur during the fetching process (e.g., if some IDs are not found), the function will return `NULL` and provide
-informative error messages to help diagnose the problem.
+A list with class \code{"rPDBapi_fetch_response"} containing the fetched
+payload under \code{$data}. The list entries are validated and normalized to the
+requested \code{ids}. Malformed responses raise typed errors.
 }
 \description{
 This function sends a GraphQL JSON query to the RCSB Protein Data Bank (PDB) to fetch data corresponding to a specified set of IDs.

@@ -38,7 +38,9 @@ The \href{https://data.rcsb.org/#data-schema}{RCSB PDB Data Schema} provides det
 \item{verbosity}{A boolean flag indicating whether to print status messages during the function execution. When set to \code{TRUE}, the function will output messages detailing the progress and any issues encountered.}
 }
 \value{
-Depending on the value of \code{return_as_dataframe}, this function returns either a dataframe or the raw data in its original format. The dataframe format is particularly useful for further data analysis and visualization within R, while the raw format may be preferred for more complex or custom data processing tasks.
+If \code{return_as_dataframe = TRUE}, returns a data frame tagged with class
+\code{"rPDBapi_dataframe"}. Otherwise returns a validated raw payload tagged with
+class \code{"rPDBapi_fetch_response"}.
 }
 \description{
 The `data_fetcher` function provides a flexible way to access data from the RCSB Protein Data Bank (PDB). By specifying an identifier, data type, and a set of properties, users can tailor the data retrieval process to meet their specific research needs. The function integrates several steps, including validating IDs, generating a JSON query, fetching the data, and formatting the response.

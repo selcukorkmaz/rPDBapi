@@ -66,6 +66,10 @@ The function returns search results based on the specified \code{return_type}:
   \item{\code{POLYMER_INSTANCE}}{A list of PDB IDs with appended asym IDs for specific polymer instances.}
   \item{\code{CHEMICAL_COMPONENT}}{A list of chemical component identifiers.}
 }
+For identifier output, the vector is tagged with class \code{"rPDBapi_search_ids"}.
+When \code{return_with_scores = TRUE}, returned results are tagged with class
+\code{"rPDBapi_search_scores"}. Raw JSON responses are tagged with class
+\code{"rPDBapi_search_raw_response"}.
 }
 \description{
 This function allows users to perform highly customizable searches in the RCSB Protein Data Bank (PDB) by specifying detailed search criteria. It interfaces directly with the RCSB PDB's RESTful API, enabling complex queries to retrieve specific data, such as PDB entries, assemblies, polymer entities, non-polymer entities, and more.

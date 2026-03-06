@@ -1,21 +1,29 @@
 ---
 title: "Accessing and Analyzing RCSB PDB Data with rPDBapi"
-author: "Selcuk Korkmaz"
+author: "Selçuk Korkmaz"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 3
+    number_sections: true
 vignette: >
   %\VignetteIndexEntry{Accessing and Analyzing RCSB PDB Data with rPDBapi}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r setup, include = FALSE}
+```{r setup, include=FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  fig.width = 8,
-  fig.height = 5
+  fig.width = 7,
+  fig.height = 5,
+  warning = FALSE,
+  message = FALSE
 )
+
+library(rPDBapi)
 
 if (!requireNamespace("rPDBapi", quietly = TRUE) &&
     requireNamespace("pkgload", quietly = TRUE)) {
@@ -38,6 +46,8 @@ library(dplyr)
 live_examples <- identical(tolower(Sys.getenv("RPDBAPI_RUN_LIVE", "false")), "true")
 have_r3dmol <- requireNamespace("r3dmol", quietly = TRUE)
 ```
+
+
 
 # Introduction
 
