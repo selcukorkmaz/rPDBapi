@@ -13,6 +13,7 @@ jobs:
     env:
       RPDBAPI_RUN_LIVE: "true"
       NOT_CRAN: "true"
+      RENV_CONFIG_REPOS_OVERRIDE: "https://cloud.r-project.org"
 
     steps:
       - uses: actions/checkout@v4
