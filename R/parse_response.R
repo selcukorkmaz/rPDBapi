@@ -17,11 +17,22 @@ parse_response <- function(response, format = "json") {
       } else if (format == "text") {
         content(response, "text", encoding = "UTF-8")
       } else {
-        stop("Unsupported format for parsing the response: ", format)
+        rpdbapi_abort(
+          paste0("Unsupported format for parsing the response: ", format),
+          class = "rPDBapi_error_invalid_input",
+          function_name = "parse_response",
+          format = format
+        )
       }
     },
     error = function(e) {
-      stop("Parsing Error: Failed to parse the response. Error: ", e$message)
+      rpdbapi_rethrow(
+        e,
+        message_prefix = "Parsing Error: Failed to parse the response. Error: ",
+        class = "rPDBapi_error_malformed_response",
+        function_name = "parse_response",
+        format = format
+      )
     }
   )
 

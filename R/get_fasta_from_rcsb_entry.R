@@ -43,13 +43,26 @@ get_fasta_from_rcsb_entry <- function(rcsb_id, chain_id = NULL, verbosity = TRUE
       GET(paste0(fasta_base_url, rcsb_id))
     },
     error = function(e) {
-      stop("Failed to retrieve data from the RCSB PDB. Network error: ", e$message)
+      rpdbapi_rethrow(
+        e,
+        message_prefix = "Failed to retrieve data from the RCSB PDB. Network error: ",
+        class = "rPDBapi_error_network",
+        wrap_typed = TRUE,
+        function_name = "get_fasta_from_rcsb_entry",
+        rcsb_id = rcsb_id
+      )
     }
   )
 
   # Check for successful response
   if (http_status(response)$category != "Success") {
-    stop("Request failed with status code ", http_status(response)$status, ": ", content(response, "text", encoding = "UTF-8"))
+    rpdbapi_abort(
+      paste0("Request failed with status code ", http_status(response)$status, ": ", content(response, "text", encoding = "UTF-8")),
+      class = "rPDBapi_error_http",
+      function_name = "get_fasta_from_rcsb_entry",
+      rcsb_id = rcsb_id,
+      status = http_status(response)$status
+    )
   }
 
   # Parse the FASTA text
@@ -58,13 +71,25 @@ get_fasta_from_rcsb_entry <- function(rcsb_id, chain_id = NULL, verbosity = TRUE
       parse_fasta_text_to_list(content(response, "text", encoding = "UTF-8"))
     },
     error = function(e) {
-      stop("Failed to parse FASTA response from RCSB PDB. The response may not be in the expected format. Error: ", e$message)
+      rpdbapi_rethrow(
+        e,
+        message_prefix = "Failed to parse FASTA response from RCSB PDB. The response may not be in the expected format. Error: ",
+        class = "rPDBapi_error_malformed_response",
+        wrap_typed = TRUE,
+        function_name = "get_fasta_from_rcsb_entry",
+        rcsb_id = rcsb_id
+      )
     }
   )
 
   if (is.null(chain_id)) {
     if (length(fasta_sequences) == 0) {
-      stop("No FASTA sequences were found for the entry ID '", rcsb_id, "'.")
+      rpdbapi_abort(
+        paste0("No FASTA sequences were found for the entry ID '", rcsb_id, "'."),
+        class = "rPDBapi_error_malformed_response",
+        function_name = "get_fasta_from_rcsb_entry",
+        rcsb_id = rcsb_id
+      )
     }
     return(fasta_sequences)
   }
@@ -77,6 +102,12 @@ get_fasta_from_rcsb_entry <- function(rcsb_id, chain_id = NULL, verbosity = TRUE
     }
   }
 
-  stop(paste0("Chain ID '", chain_id, "' not found in PDB entry '", rcsb_id ,". Please check the chain ID and try again."))
+  rpdbapi_abort(
+    paste0("Chain ID '", chain_id, "' not found in PDB entry '", rcsb_id ,". Please check the chain ID and try again."),
+    class = "rPDBapi_error_invalid_input",
+    function_name = "get_fasta_from_rcsb_entry",
+    rcsb_id = rcsb_id,
+    chain_id = chain_id
+  )
 }
 

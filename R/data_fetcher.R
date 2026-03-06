@@ -92,6 +92,7 @@ data_fetcher <- function(id = NULL, data_type = "ENTRY", properties = NULL, retu
       function_name = "data_fetcher"
     )
   }
+  id <- rpdbapi_prepare_ids(id, data_type = data_type)
 
   if (!data_type %in% c("ENTRY", "POLYMER_ENTITY", "BRANCHED_ENTITY",  "ASSEMBLY", "NONPOLYMER_ENTITY",
                         "POLYMER_ENTITY_INSTANCE", "BRANCHED_ENTITY_INSTANCE", "NONPOLYMER_ENTITY_INSTANCE", "CHEMICAL_COMPONENT")) {
@@ -122,7 +123,14 @@ data_fetcher <- function(id = NULL, data_type = "ENTRY", properties = NULL, retu
       generate_json_query(id, data_type, properties)
     },
     error = function(e) {
-      stop("Failed to generate JSON query. Error: ", e$message)
+      rpdbapi_rethrow(
+        e,
+        message_prefix = "Failed to generate JSON query. Error: ",
+        class = "rPDBapi_error_invalid_input",
+        wrap_typed = TRUE,
+        function_name = "data_fetcher",
+        data_type = data_type
+      )
     }
   )
 
@@ -132,7 +140,14 @@ data_fetcher <- function(id = NULL, data_type = "ENTRY", properties = NULL, retu
       fetch_data(json_query = json_query, data_type = data_type, ids = id)
     },
     error = function(e) {
-      stop("Failed to fetch data from PDB. Error: ", e$message)
+      rpdbapi_rethrow(
+        e,
+        message_prefix = "Failed to fetch data from PDB. Error: ",
+        class = "rPDBapi_error_request_failed",
+        wrap_typed = TRUE,
+        function_name = "data_fetcher",
+        data_type = data_type
+      )
     }
   )
 
@@ -152,7 +167,14 @@ data_fetcher <- function(id = NULL, data_type = "ENTRY", properties = NULL, retu
         return_data_as_dataframe(response, data_type, id)
       },
       error = function(e) {
-        stop("Failed to convert response to dataframe. Error: ", e$message)
+        rpdbapi_rethrow(
+          e,
+          message_prefix = "Failed to convert response to dataframe. Error: ",
+          class = "rPDBapi_error_malformed_response",
+          wrap_typed = TRUE,
+          function_name = "data_fetcher",
+          data_type = data_type
+        )
       }
     )
     response <- rpdbapi_add_class(response, "rPDBapi_dataframe")

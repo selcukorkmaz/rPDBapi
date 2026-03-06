@@ -67,119 +67,37 @@
 #' @export
 
 query_search <- function(search_term, query_type = "full_text", return_type = "entry", scan_params = NULL, num_attempts = 1, sleep_time = 0.5) {
-  # Define query subtype as NULL initially
-  query_subtype <- NULL
+  resolved <- rpdbapi_resolve_query_type(search_term = search_term, query_type = query_type)
+  search_term <- resolved$search_term
+  query_type <- resolved$query_type
+  query_subtype <- resolved$query_subtype
 
-  # Adjust query_type and query_subtype based on input
-  if (query_type == "PubmedIdQuery") {
-    query_type <- "text"
-    query_subtype <- "pmid"
-  } else if (query_type == "TreeEntityQuery") {
-    query_type <- "text"
-    query_subtype <- "taxid"
-  } else if (query_type == "ExpTypeQuery") {
-    query_type <- "text"
-    query_subtype <- "experiment_type"
-    search_term <- toupper(search_term)
-    if (!search_term %in% c("X-RAY DIFFRACTION", "ELECTRON MICROSCOPY",
-                            "SOLID-STATE NMR", "SOLUTION NMR", "NEUTRON DIFFRACTION",
-                            "ELECTRON CRYSTALLOGRAPHY", "POWDER DIFFRACTION",
-                            "FIBER DIFFRACTION", "SOLUTION SCATTERING", "EPR",
-                            "FLUORESCENCE TRANSFER", "INFRARED SPECTROSCOPY",
-                            "THEORETICAL MODEL")) {
-      stop("Invalid Experimental Method: The provided experimental method is not recognized. Please ensure it matches one of the accepted values (e.g., 'X-RAY DIFFRACTION').")
-    }
-  } else if (query_type == "AdvancedAuthorQuery") {
-    query_type <- "text"
-    query_subtype <- "author"
-  } else if (query_type == "OrganismQuery") {
-    query_type <- "text"
-    query_subtype <- "organism"
-  } else if (query_type == "pfam") {
-    query_type <- "text"
-    query_subtype <- "pfam"
-  } else if (query_type == "uniprot") {
-    query_type <- "text"
-    query_subtype <- "uniprot"
-  }
+  rpdbapi_validate_query_search_return_type(return_type)
 
-  # Check for valid return_type
-  if (!return_type %in% c("entry", "polymer_entity")) {
-    stop("Invalid Return Type: The return_type '", return_type, "' is not valid. Please use 'entry' or 'polymer_entity'.")
-  }
-
-  # Initialize query parameters
-  query_params <- list()
-  query_params$type <- "terminal"
-  query_params$service <- query_type
-
-  # Handle different query types
-  if (query_type %in% c("full_text", "text")) {
-    query_params$parameters <- list(value = search_term)
-  } else if (query_type == "sequence") {
-    query_params$parameters <- list(target = "pdb_protein_sequence", value = search_term)
-  } else if (query_type == "structure") {
-    query_params$parameters <- list(operator = "relaxed_shape_match", value = list(entry_id = search_term, assembly_id = "1"))
-  }else{
-    stop("Unsupported Query Type: The query_type '", query_type, "' is not supported. Please use one of the following: 'full_text', 'PubmedIdQuery', 'TreeEntityQuery', 'ExpTypeQuery', 'AdvancedAuthorQuery', 'OrganismQuery', 'pfam', 'uniprot', 'sequence', 'structure'.")
-  }
-
-
-  # Apply query_subtype conditions if applicable
-  if (!is.null(query_subtype)) {
-    if (query_subtype == "pmid") {
-      query_params$parameters <- list(operator = "in", negation = FALSE, value = list(search_term), attribute = "rcsb_pubmed_container_identifiers.pubmed_id")
-    } else if (query_subtype == "taxid") {
-      query_params$parameters <- list(operator = "exact_match", negation = FALSE, value = as.character(search_term), attribute = "rcsb_entity_source_organism.taxonomy_lineage.id")
-    } else if (query_subtype == "experiment_type") {
-      query_params$parameters <- list(operator = "exact_match", negation = FALSE, value = as.character(search_term), attribute = "exptl.method")
-    } else if (query_subtype == "author") {
-      query_params$parameters <- list(operator = "exact_match", negation = FALSE, value = as.character(search_term), attribute = "rcsb_primary_citation.rcsb_authors")
-    } else if (query_subtype == "organism") {
-      query_params$parameters <- list(operator = "contains_words", negation = FALSE, value = as.character(search_term), attribute = "rcsb_entity_source_organism.taxonomy_lineage.name")
-    } else if (query_subtype == "pfam") {
-      query_params$parameters <- list(operator = "exact_match", negation = FALSE, value = as.character(search_term), attribute = "rcsb_polymer_entity_annotation.annotation_id")
-    } else if (query_subtype == "uniprot") {
-      query_params$parameters <- list(operator = "exact_match", negation = FALSE, value = as.character(search_term), attribute = "rcsb_polymer_entity_container_identifiers.reference_sequence_identifiers.database_accession")
-    }
-  }
-
-  # Define default query parameters and allow user-provided overrides.
-  default_scan_params <- list(
-    query = query_params,
-    return_type = return_type,
-    request_options = list(results_verbosity = "verbose")
+  query_params <- rpdbapi_build_query_params(search_term = search_term, query_type = query_type)
+  query_params <- rpdbapi_apply_query_subtype(
+    query_params = query_params,
+    query_subtype = query_subtype,
+    search_term = search_term
   )
-  if (is.null(scan_params)) {
-    scan_params <- default_scan_params
-  } else {
-    if (!is.list(scan_params)) {
-      rpdbapi_abort(
-        "Invalid scan_params: expected a list.",
-        class = "rPDBapi_error_invalid_input",
-        function_name = "query_search"
-      )
-    }
-    scan_params <- utils::modifyList(default_scan_params, scan_params, keep.null = TRUE)
-  }
-
-  # Keep response parsing and request return_type in sync with the function argument.
-  scan_params$return_type <- return_type
-
-  # Additional handling for 'entry' return type
-  if (is.null(scan_params$request_options)) {
-    scan_params$request_options <- list()
-  }
-  if (return_type == "entry" && is.null(scan_params$request_options$return_all_hits)) {
-    scan_params$request_options$return_all_hits <- TRUE
-  }
+  scan_params <- rpdbapi_build_scan_params(
+    query_params = query_params,
+    return_type = return_type,
+    scan_params = scan_params
+  )
 
   url <- "https://search.rcsb.org/rcsbsearch/v2/query?json="
 
   for (attempt in 1:num_attempts) {
     response <- tryCatch(
       {
-        POST(url, body = scan_params, encode = "json", content_type("application/json"))
+        rpdbapi_http_request(
+          url = url,
+          method = "POST",
+          body = scan_params,
+          encode = "json",
+          content_type_value = "application/json"
+        )
       },
       error = function(e) {
         warning("HTTP request failed on attempt ", attempt, ": ", e$message)
@@ -188,10 +106,10 @@ query_search <- function(search_term, query_type = "full_text", return_type = "e
     )
 
     if (!is.null(response)) {
-      if (http_status(response)$category == "Success") {
+      if (rpdbapi_http_success(response)) {
         response_val <- tryCatch(
           {
-            fromJSON(content(response, "text", encoding = "UTF-8"))
+            fromJSON(rpdbapi_response_text(response))
           },
           error = function(e) {
             rpdbapi_abort(
@@ -234,11 +152,17 @@ query_search <- function(search_term, query_type = "full_text", return_type = "e
           return(response_val)
         }
       } else {
-        warning("Request failed with status: ", http_status(response)$message, ". Response content: ", content(response, "text", encoding = "UTF-8"))
+        warning("Request failed with status: ", rpdbapi_http_status_message(response), ". Response content: ", rpdbapi_response_text(response))
       }
     }
     Sys.sleep(sleep_time)
   }
 
-  stop("All retrieval attempts failed after ", num_attempts, " tries. Please check the search term, query type, and your network connection.")
+  rpdbapi_abort(
+    paste0("All retrieval attempts failed after ", num_attempts, " tries. Please check the search term, query type, and your network connection."),
+    class = "rPDBapi_error_request_failed",
+    function_name = "query_search",
+    num_attempts = num_attempts,
+    query_type = query_type
+  )
 }

@@ -1,0 +1,1976 @@
+---
+title: "Accessing and Analyzing RCSB PDB Data with rPDBapi"
+author: "Selcuk Korkmaz"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Accessing and Analyzing RCSB PDB Data with rPDBapi}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 8,
+  fig.height = 5
+)
+
+if (!requireNamespace("rPDBapi", quietly = TRUE) &&
+    requireNamespace("pkgload", quietly = TRUE)) {
+  package_root <- if (file.exists("DESCRIPTION")) {
+    "."
+  } else if (file.exists(file.path("..", "DESCRIPTION"))) {
+    ".."
+  } else {
+    NA_character_
+  }
+  
+  if (!is.na(package_root)) {
+    pkgload::load_all(package_root, export_all = FALSE, quiet = TRUE)
+  }
+}
+
+library(rPDBapi)
+library(dplyr)
+
+live_examples <- identical(tolower(Sys.getenv("RPDBAPI_RUN_LIVE", "false")), "true")
+have_r3dmol <- requireNamespace("r3dmol", quietly = TRUE)
+```
+
+# Introduction
+
+The Protein Data Bank (PDB) is the primary global archive for experimentally
+determined three-dimensional structures of biological macromolecules. The RCSB
+PDB exposes these data through programmatic interfaces that support search,
+metadata retrieval, coordinate download, and access to assembly- and
+entity-level annotations. For structural bioinformatics, these APIs make it
+possible to move from a biological question to a reproducible computational
+workflow without manual browsing of the PDB website.
+
+`rPDBapi` provides an R interface to these services. It combines search helpers,
+operator-based query construction, metadata retrieval, GraphQL-based data
+fetching, and structure download utilities in a form that fits naturally into
+R-based data analysis pipelines.
+
+This vignette is written for users who want to retrieve and analyze PDB data
+directly in R. The examples focus on protein kinase structures because kinases
+are biologically important, structurally diverse, and common targets in
+drug-discovery workflows.
+
+```{r live-note, results = "asis"}
+if (!live_examples) {
+  cat(
+    "This vignette contains live API examples. ",
+    "To execute them during rendering, set `RPDBAPI_RUN_LIVE=true` before knitting. ",
+    "When the flag is not set, the code is still shown but network-dependent chunks are not evaluated.\n",
+    sep = ""
+  )
+}
+```
+
+The note above makes the vignette safe to build in offline or CRAN-like
+environments while keeping all examples directly executable in a live session.
+This is especially important for API-driven packages, where remote services are
+part of the normal workflow but should not make documentation brittle.
+
+# Installation and Setup
+
+```{r installation, eval = FALSE}
+install.packages("rPDBapi")
+
+# Development version
+remotes::install_github("selcukorkmaz/rPDBapi")
+```
+
+The package can be installed from CRAN or from the development repository. The
+development version is useful when you want the newest API mappings, tests, and
+documentation updates. In a package vignette, installation code is normally
+shown but not run, because users execute it once interactively rather than
+during every render.
+
+```{r libraries}
+library(rPDBapi)
+library(dplyr)
+```
+
+This chunk loads the package and `dplyr`, which we will use for simple
+tabulation and ranking. Most structural bioinformatics workflows combine API
+access with data manipulation, so it is useful to establish that pattern from
+the beginning.
+
+# Why Access the PDB from R?
+
+Programmatic PDB access is valuable when you need to:
+  
+  - search large structural collections reproducibly
+- retrieve metadata for many entries at once
+- move from identifiers to tidy analysis tables
+- combine structure data with statistics, visualization, and modeling tools in R
+
+In practice, this means that a question such as "Which high-resolution protein
+kinase structures are available, what organisms do they come from, and what do
+their assemblies look like?" can be answered in one analysis script instead of
+through manual web browsing.
+
+# rPDBapi Capabilities
+
+At a high level, the package supports seven related tasks:
+  
+  1. Search the archive with simple or structured queries.
+2. Retrieve entry-, entity-, assembly-, or chemical-component metadata.
+3. Discover and validate retrievable fields before issuing a request.
+4. Normalize, infer, and build identifiers across PDB record levels.
+5. Download coordinate files and parse them into R objects.
+6. Convert nested API responses into analysis-ready data frames or richer typed objects.
+7. Scale retrieval with batch fetching, cache management, provenance, and analysis helpers.
+
+The current package version also hardens return contracts and error classes.
+That matters when `rPDBapi` is embedded in larger pipelines, because downstream
+code can now make stronger assumptions about object classes, identifier
+formats, and failure modes.
+
+# Package Feature Map
+
+`rPDBapi` exports functions that fall into nine practical groups:
+  
+  - Search helpers: `query_search()`, `perform_search()`
+- Search operators: `DefaultOperator()`, `ExactMatchOperator()`,
+`InOperator()`, `ContainsWordsOperator()`, `ContainsPhraseOperator()`,
+`ComparisonOperator()`, `RangeOperator()`, `ExistsOperator()`,
+`SequenceOperator()`, `SeqMotifOperator()`, `StructureOperator()`,
+`ChemicalOperator()`
+- Query composition helpers: `QueryNode()`, `QueryGroup()`,
+`RequestOptions()`, `infer_search_service()`, `ScoredResult()`
+- Identifier helpers: `infer_id_type()`, `parse_rcsb_id()`,
+`build_entry_id()`, `build_assembly_id()`, `build_entity_id()`,
+`build_instance_id()`
+- Metadata retrieval: `data_fetcher()`, `fetch_data()`, `generate_json_query()`,
+`get_info()`, `find_results()`, `find_papers()`, `describe_chemical()`,
+`get_fasta_from_rcsb_entry()`
+- Schema-aware retrieval helpers: `list_rcsb_fields()`,
+`search_rcsb_fields()`, `validate_properties()`, `add_property()`
+- Batch, cache, and provenance helpers: `data_fetcher_batch()`,
+`cache_info()`, `clear_rpdbapi_cache()`
+- Structure and file retrieval: `get_pdb_file()`, `get_pdb_api_url()`
+- Rich objects and analysis helpers: `as_rpdb_entry()`,
+`as_rpdb_assembly()`, `as_rpdb_polymer_entity()`,
+`as_rpdb_chemical_component()`, `as_rpdb_structure()`,
+`summarize_entries()`, `summarize_assemblies()`,
+`extract_taxonomy_table()`, `extract_ligand_table()`,
+`extract_calpha_coordinates()`, `join_structure_sequence()`
+- Low-level API and parsing utilities: `send_api_request()`,
+`handle_api_errors()`, `parse_response()`, `search_graphql()`,
+`return_data_as_dataframe()`
+
+The main workflow only needs a subset of these functions, but the full package
+is designed as a layered interface. High-level helpers are convenient for
+routine work, while low-level helpers make it possible to debug requests, build
+custom workflows, or extend the package into larger pipelines.
+
+# Core Concepts in the RCSB PDB API
+
+Before starting with code, it helps to distinguish a few PDB concepts:
+  
+  - `ENTRY`: a PDB deposition such as `4HHB`
+- `ASSEMBLY`: a biological assembly within an entry, such as `4HHB-1`
+- `POLYMER_ENTITY`: a unique macromolecular entity within an entry, such as a protein chain definition
+- `ATTRIBUTE`: a searchable or retrievable field, such as `exptl.method` or `rcsb_entry_info.molecular_weight`
+
+`rPDBapi` mirrors these levels. Search functions return identifiers at the
+appropriate level, and metadata functions use those identifiers to fetch the
+corresponding records.
+
+```{r concepts}
+kinase_full_text <- DefaultOperator("protein kinase")
+high_resolution <- RangeOperator(
+  attribute = "rcsb_entry_info.resolution_combined",
+  from_value = 0,
+  to_value = 2.5
+)
+xray_method <- ExactMatchOperator(
+  attribute = "exptl.method",
+  value = "X-RAY DIFFRACTION"
+)
+
+kinase_query <- QueryGroup(
+  queries = list(kinase_full_text, xray_method, high_resolution),
+  logical_operator = "AND"
+)
+
+kinase_query
+```
+
+This code builds a structured query object without contacting the API. The
+query says: search for records related to "protein kinase", require
+X-ray diffraction as the experimental method, and restrict the results to
+structures with a reported resolution of 2.5 angstroms or better. This is a
+useful pattern because it separates biological intent from the mechanics of the
+HTTP request.
+
+```{r request-options}
+search_controls <- RequestOptions(
+  result_start_index = 0,
+  num_results = 10,
+  sort_by = "score",
+  desc = TRUE
+)
+
+search_controls
+```
+
+`RequestOptions()` defines how many hits to return and how to sort them. In
+other words, the query object describes what you want, and the request options
+describe how you want it delivered. That distinction matters when you are
+iterating over result pages or creating reproducible subsets for downstream
+analysis.
+
+```{r identifier-helpers}
+example_ids <- c("4HHB", "4HHB-1", "4HHB_1", "4HHB.A", "ATP")
+
+dplyr::tibble(
+  id = example_ids,
+  inferred_type = infer_id_type(example_ids)
+)
+
+parse_rcsb_id("4HHB-1")
+build_entry_id(" 4HHB ")
+build_assembly_id("4HHB", 1)
+build_entity_id("4HHB", 1)
+build_instance_id("4HHB", "A")
+```
+
+These helpers make identifier handling explicit. They are useful when a
+workflow moves across entry-, assembly-, entity-, and chain-level retrieval,
+because the required identifier syntax changes with the biological level. In
+practice, the helpers reduce ad hoc string handling and make it easier to write
+validation checks before a request is sent.
+
+# Workflow 1: Simple Search for Kinase Structures
+
+```{r simple-search, eval = live_examples}
+kinase_hits <- query_search("protein kinase")
+
+head(kinase_hits, 10)
+class(kinase_hits)
+attr(kinase_hits, "return_type")
+```
+
+`query_search()` is the fastest way to ask a general question of the archive.
+Here it performs a full-text search and returns entry identifiers. The returned
+object is not just a plain character vector: it carries the class
+`rPDBapi_query_ids`, which makes the contract explicit and helps downstream code
+reason about what kind of object was returned.
+
+# Workflow 2: Refine the Search with Structured Operators
+
+```{r advanced-search, eval = live_examples}
+kinase_entry_ids <- perform_search(
+  search_operator = kinase_query,
+  return_type = "ENTRY",
+  request_options = search_controls,
+  verbosity = FALSE
+)
+
+kinase_entry_ids
+class(kinase_entry_ids)
+```
+
+`perform_search()` executes the operator-based query assembled earlier. This is
+the function to use when you need precise control over attributes, logical
+combinations, return types, or pagination. In structural bioinformatics, this
+kind of targeted search is often more useful than full-text search alone,
+because it lets you combine biological meaning with experimental constraints.
+
+# Workflow 3: Retrieve Entry-Level Metadata
+
+```{r entry-properties}
+entry_properties <- list(
+  rcsb_id = list(),
+  struct = c("title"),
+  struct_keywords = c("pdbx_keywords"),
+  exptl = c("method"),
+  rcsb_entry_info = c("molecular_weight", "resolution_combined"),
+  rcsb_accession_info = c("initial_release_date")
+)
+
+entry_properties
+```
+
+This property list defines the fields we want from the GraphQL endpoint. It
+captures both structural metadata and biologically meaningful annotations:
+  structure title, keywords, experimental method, molecular weight, resolution,
+and release date. By stating these fields explicitly, the workflow remains
+transparent and easy to reproduce.
+
+```{r schema-aware-properties}
+head(list_rcsb_fields("ENTRY"), 10)
+search_rcsb_fields("resolution", data_type = "ENTRY")
+
+validate_properties(
+  properties = entry_properties,
+  data_type = "ENTRY",
+  strict = TRUE
+)
+
+validate_properties(
+  properties = list(
+    rcsb_entry_info = c("resolution_combined", "unknown_subfield")
+  ),
+  data_type = "ENTRY",
+  strict = FALSE
+)
+```
+
+The schema-aware helpers are useful when building property lists iteratively.
+`list_rcsb_fields()` exposes the package's built-in field registry,
+`search_rcsb_fields()` narrows it to a topic of interest, and
+`validate_properties()` checks that a property list matches the expected
+data-type-specific structure. In strict mode, validation fails early; in
+non-strict mode, it returns diagnostics that can be incorporated into an
+interactive workflow or a package test.
+
+```{r strict-validation-pattern, eval = FALSE}
+old_opt <- options(rPDBapi.strict_property_validation = TRUE)
+on.exit(options(old_opt), add = TRUE)
+
+generate_json_query(
+  ids = c("4HHB"),
+  data_type = "ENTRY",
+  properties = list(rcsb_entry_info = c("resolution_combined"))
+)
+```
+
+This option-gated strict mode is useful when you want a pipeline to reject
+unknown fields immediately. Because the option is opt-in, the package preserves
+backward compatibility for existing code while still supporting stricter
+validation in controlled workflows.
+
+```{r entry-metadata, eval = live_examples}
+kinase_metadata <- data_fetcher(
+  id = kinase_entry_ids[1:5],
+  data_type = "ENTRY",
+  properties = entry_properties,
+  return_as_dataframe = TRUE
+)
+
+kinase_metadata
+```
+
+`data_fetcher()` is the main high-level retrieval function for metadata. It
+takes identifiers, the data level of interest, and a property list, then
+returns either a validated nested response or a flattened data frame. For many
+analysis tasks, returning a data frame is the most convenient choice because it
+fits directly into standard R workflows for filtering, joining, and plotting.
+
+# Workflow 4: Inspect the Raw API Payload and Convert It to Tidy Data
+
+```{r raw-query, eval = live_examples}
+kinase_json_query <- generate_json_query(
+  ids = kinase_entry_ids[1:3],
+  data_type = "ENTRY",
+  properties = entry_properties
+)
+
+cat(kinase_json_query)
+```
+
+This chunk exposes the GraphQL query string that `rPDBapi` sends to the RCSB
+data API. Seeing the generated query is helpful when you are debugging a field
+name, comparing package output with the official schema, or teaching others how
+the package maps R objects to API requests.
+
+```{r raw-response, eval = live_examples}
+kinase_raw <- fetch_data(
+  json_query = kinase_json_query,
+  data_type = "ENTRY",
+  ids = kinase_entry_ids[1:3]
+)
+
+str(kinase_raw, max.level = 2)
+```
+
+`fetch_data()` returns a validated raw payload and tags it with the class
+`rPDBapi_fetch_response`. This is useful when you want to inspect nested JSON
+content before flattening it, preserve hierarchy for custom parsing, or verify
+that a field is present before building a larger workflow around it.
+
+```{r tidy-conversion, eval = live_examples}
+kinase_tidy <- return_data_as_dataframe(
+  response = kinase_raw,
+  data_type = "ENTRY",
+  ids = kinase_entry_ids[1:3]
+)
+
+kinase_tidy
+```
+
+`return_data_as_dataframe()` converts the nested response into a rectangular R
+data structure. This transformation is central to reproducible bioinformatics:
+once the results are tidy, they can be analyzed with `dplyr`, joined to other
+annotations, summarized statistically, or passed to visualization packages.
+
+# Workflow 4b: Batch Retrieval, Provenance, and Cache-Aware Access
+
+High-throughput structural workflows rarely stop at one or two identifiers. In
+screening, comparative analysis, or annotation projects, it is common to fetch
+dozens or hundreds of records with the same property specification.
+
+```{r batch-fetch, eval = live_examples}
+cache_dir <- file.path(tempdir(), "rpdbapi-vignette-cache")
+
+kinase_batch <- data_fetcher_batch(
+  id = kinase_entry_ids[1:5],
+  data_type = "ENTRY",
+  properties = entry_properties,
+  return_as_dataframe = TRUE,
+  batch_size = 2,
+  retry_attempts = 2,
+  retry_backoff = 0,
+  cache = TRUE,
+  cache_dir = cache_dir,
+  progress = FALSE,
+  verbosity = FALSE
+)
+
+kinase_batch
+attr(kinase_batch, "provenance")
+cache_info(cache_dir)
+```
+
+`data_fetcher_batch()` scales the single-request `data_fetcher()` model to
+larger identifier sets. It splits requests into batches, retries transient
+failures, optionally stores batch results on disk, and attaches provenance to
+the returned object. That provenance is important for reproducibility because it
+records the retrieval mode, batch size, retry configuration, and cache usage.
+
+```{r clear-cache, eval = live_examples}
+clear_rpdbapi_cache(cache_dir)
+cache_info(cache_dir)
+```
+
+This cache-management pattern is especially useful in iterative analysis.
+Repeated metadata retrieval becomes faster when the same requests are reused,
+while explicit cache inspection and cleanup keep the workflow transparent.
+
+```{r batch-strategy, eval = FALSE}
+# Use data_fetcher() when:
+# - the ID set is small
+# - you want the simplest request path
+# - retry, cache, and provenance are unnecessary
+
+# Use data_fetcher_batch() when:
+# - the ID set is large
+# - requests may need retries
+# - repeated retrieval should reuse cached results
+# - you want an explicit provenance record
+```
+
+In practice, `data_fetcher()` is usually sufficient for exploratory work.
+`data_fetcher_batch()` becomes more useful as the workflow moves toward larger
+or repeated retrieval, where retry behavior, caching, and provenance become
+part of the analysis design rather than implementation detail.
+
+```{r provenance-interpretation, eval = live_examples}
+provenance_tbl <- dplyr::tibble(
+  field = names(attr(kinase_batch, "provenance")),
+  value = vapply(
+    attr(kinase_batch, "provenance"),
+    function(x) {
+      if (is.list(x)) "<list>" else as.character(x)
+    },
+    character(1)
+  )
+)
+
+provenance_tbl
+```
+
+Interpreting provenance explicitly is useful when results are produced in a
+non-interactive workflow. The provenance record makes it clear how many batches
+were used, whether caching was enabled, and how the retrieval was configured,
+which makes the metadata table easier to audit later.
+
+# Workflow 5: Retrieve Assembly-Level Data
+
+Biological assemblies are often the correct unit of interpretation for
+oligomeric proteins. A deposited asymmetric unit may not reflect the functional
+quaternary structure, so assembly-level retrieval is important when studying
+stoichiometry, symmetry, and interfaces.
+
+```{r assembly-search, eval = live_examples}
+kinase_assembly_ids <- perform_search(
+  search_operator = kinase_query,
+  return_type = "ASSEMBLY",
+  request_options = RequestOptions(result_start_index = 0, num_results = 5),
+  verbosity = FALSE
+)
+
+kinase_assembly_ids
+```
+
+This search requests assembly identifiers rather than entry identifiers. The
+returned IDs encode both the entry and the assembly number, making them
+appropriate inputs for assembly-level metadata retrieval. This is an important
+distinction in structural biology because entry-level and assembly-level
+questions are not interchangeable.
+
+```{r assembly-metadata, eval = live_examples}
+assembly_properties <- list(
+  rcsb_id = list(),
+  pdbx_struct_assembly = c("details", "method_details", "oligomeric_count"),
+  rcsb_struct_symmetry = c("kind", "symbol")
+)
+
+kinase_assemblies <- data_fetcher(
+  id = kinase_assembly_ids,
+  data_type = "ASSEMBLY",
+  properties = assembly_properties,
+  return_as_dataframe = TRUE
+)
+
+kinase_assemblies
+```
+
+This chunk retrieves assembly descriptors and symmetry annotations. In
+practice, these fields help answer questions about oligomeric state and
+biological interpretation, such as whether a kinase structure is monomeric,
+dimeric, or associated with a symmetric assembly.
+
+```{r assembly-objects, eval = live_examples}
+assembly_object <- as_rpdb_assembly(
+  kinase_assemblies,
+  metadata = list(query = "protein kinase assemblies")
+)
+
+assembly_object
+dplyr::as_tibble(assembly_object)
+summarize_assemblies(assembly_object)
+```
+
+The assembly object wrapper is useful when you want to retain lightweight
+metadata alongside a table while still working with tibble-oriented tools.
+`summarize_assemblies()` then provides a narrow helper for common assembly
+questions, such as typical oligomeric count and the diversity of symmetry
+labels in the retrieved result set.
+
+# Workflow 5b: Identifier-Aware Retrieval Patterns
+
+One practical source of bugs in structural workflows is mixing identifier
+levels. A valid entry ID is not automatically a valid assembly or entity ID,
+and the corresponding `data_type` must match the biological level of the
+request.
+
+```{r identifier-aware-retrieval}
+dplyr::tibble(
+  example_id = c("4HHB", "4HHB-1", "4HHB_1", "4HHB.A", "ATP"),
+  inferred_type = infer_id_type(c("4HHB", "4HHB-1", "4HHB_1", "4HHB.A", "ATP"))
+)
+
+parse_rcsb_id("4HHB.A")
+```
+
+This is useful as a preflight step before retrieval. In larger workflows, a
+small identifier check often saves time because it catches level mismatches
+before the request reaches the API.
+
+```{r identifier-aware-fetch, eval = FALSE}
+# Entry-level retrieval
+data_fetcher(
+  id = build_entry_id("4HHB"),
+  data_type = "ENTRY",
+  properties = list(rcsb_id = list())
+)
+
+# Assembly-level retrieval
+data_fetcher(
+  id = build_assembly_id("4HHB", 1),
+  data_type = "ASSEMBLY",
+  properties = list(rcsb_id = list())
+)
+
+# Polymer-entity retrieval
+data_fetcher(
+  id = build_entity_id("4HHB", 1),
+  data_type = "POLYMER_ENTITY",
+  properties = list(rcsb_id = list())
+)
+```
+
+Using the builder helpers makes the intended record level explicit in code.
+That is especially helpful when identifiers are generated programmatically from
+entry IDs and entity or assembly indices.
+
+# Workflow 6: Retrieve Taxonomy and Chain-Level Biological Context
+
+Many analyses need entity-level annotations rather than whole-entry metadata.
+For example, taxonomy belongs naturally to polymer entities because different
+entities within the same structure can come from different organisms or
+constructs.
+
+```{r polymer-search, eval = live_examples}
+kinase_polymer_ids <- perform_search(
+  search_operator = kinase_query,
+  return_type = "POLYMER_ENTITY",
+  request_options = RequestOptions(result_start_index = 0, num_results = 5),
+  verbosity = FALSE
+)
+
+kinase_polymer_ids
+```
+
+Here the same biological query is projected onto polymer entities. This is
+useful when you want annotations at the chain-definition level, such as source
+organism, sequence grouping, or entity-specific descriptors.
+
+```{r polymer-metadata, eval = live_examples}
+polymer_properties <- list(
+  rcsb_id = list(),
+  rcsb_entity_source_organism = c("ncbi_taxonomy_id", "ncbi_scientific_name"),
+  rcsb_cluster_membership = c("cluster_id", "identity")
+)
+
+kinase_polymer_metadata <- data_fetcher(
+  id = kinase_polymer_ids,
+  data_type = "POLYMER_ENTITY",
+  properties = polymer_properties,
+  return_as_dataframe = TRUE
+)
+
+kinase_polymer_metadata
+```
+
+This result provides organism-level context that is often essential in
+comparative structural biology. For example, you might use these fields to
+separate human kinase structures from bacterial homologs, or to identify
+closely related entities before selecting representatives for downstream
+modeling.
+
+```{r taxonomy-extraction, eval = live_examples}
+polymer_object <- as_rpdb_polymer_entity(
+  kinase_polymer_metadata,
+  metadata = list(query = "kinase polymer entities")
+)
+
+taxonomy_table <- extract_taxonomy_table(polymer_object)
+
+taxonomy_table
+taxonomy_table %>%
+  count(ncbi_scientific_name, sort = TRUE)
+```
+
+`extract_taxonomy_table()` is intentionally narrow: it keeps only the fields
+needed to represent source-organism assignments cleanly. This is useful when a
+larger polymer-entity table contains many retrieval columns, but the immediate
+analysis question is taxonomic composition or species-level redundancy.
+
+# Workflow 7: Retrieve Detailed Entry Annotations
+
+```{r entry-detail, eval = live_examples}
+selected_entry <- kinase_entry_ids[[1]]
+selected_info <- get_info(selected_entry)
+
+entry_summary <- dplyr::tibble(
+  rcsb_id = selected_entry,
+  title = purrr::pluck(selected_info, "struct", "title", .default = NA_character_),
+  keywords = purrr::pluck(selected_info, "struct_keywords", "pdbx_keywords", .default = NA_character_),
+  method = purrr::pluck(selected_info, "exptl", 1, "method", .default = NA_character_),
+  citation_title = purrr::pluck(selected_info, "rcsb_primary_citation", "title", .default = NA_character_),
+  resolution = paste(
+    purrr::pluck(selected_info, "rcsb_entry_info", "resolution_combined", .default = NA),
+    collapse = "; "
+  )
+)
+
+entry_summary
+```
+
+`get_info()` retrieves a full entry record as a nested list. This is useful
+when you want a richer, less filtered representation than a GraphQL property
+subset. In this example, we extract structure title, keywords, experimental
+method, citation title, and resolution to build a compact summary of one kinase
+entry. These fields are exactly the kinds of annotations structural biologists
+inspect when deciding whether a structure is suitable for biological
+interpretation or downstream modeling.
+
+```{r literature-links, eval = live_examples}
+kinase_papers <- find_papers("protein kinase", max_results = 3)
+kinase_keywords <- find_results("protein kinase", field = "struct_keywords")
+
+kinase_papers
+utils::head(kinase_keywords, 3)
+```
+
+These helper functions show how `rPDBapi` can bridge structures and biological
+interpretation. `find_papers()` provides publication titles associated with
+matching entries, while `find_results()` can retrieve selected metadata fields
+across search results. Together, they support a workflow in which structures,
+annotations, and literature references are linked inside the same R session.
+
+# Workflow 8: Download Coordinates and Inspect Atomic Data
+
+```{r coordinates, eval = live_examples}
+kinase_structure <- get_pdb_file(
+  pdb_id = selected_entry,
+  filetype = "cif",
+  verbosity = FALSE
+)
+
+coordinate_matrix <- matrix(kinase_structure$xyz, ncol = 3, byrow = TRUE)
+coordinate_df <- data.frame(
+  x = coordinate_matrix[, 1],
+  y = coordinate_matrix[, 2],
+  z = coordinate_matrix[, 3]
+)
+
+calpha_atoms <- cbind(
+  kinase_structure$atom[kinase_structure$calpha, c("chain", "resno", "resid")],
+  coordinate_df[kinase_structure$calpha, , drop = FALSE]
+)
+
+head(calpha_atoms, 10)
+```
+
+`get_pdb_file()` downloads and parses the structure file into an object that
+contains atomic records and coordinates. This is the transition point from
+metadata analysis to coordinate analysis. The example extracts C-alpha atoms,
+which are commonly used in structural alignment, geometry summaries, coarse
+distance analyses, and quick visual inspection of protein backbones.
+
+```{r calpha-helper, eval = live_examples}
+calpha_atoms <- extract_calpha_coordinates(kinase_structure)
+
+head(calpha_atoms, 10)
+```
+
+`extract_calpha_coordinates()` packages a common structural-bioinformatics step
+into a reusable helper. The result is immediately usable for plotting,
+distance-based summaries, or chain-level coordinate analyses without manually
+reconstructing the atom/coordinate join each time.
+
+```{r fasta, eval = live_examples}
+kinase_sequences <- get_fasta_from_rcsb_entry(selected_entry, verbosity = FALSE)
+
+length(kinase_sequences)
+utils::head(nchar(unlist(kinase_sequences)))
+```
+
+The FASTA workflow complements coordinate retrieval by exposing the underlying
+macromolecular sequences. Having both sequence and structure available in the
+same environment is useful for tasks such as domain boundary checks, sequence
+length summaries, and linking structural hits to sequence-based pipelines.
+
+```{r structure-sequence-join, eval = live_examples}
+chain_sequence_summary <- join_structure_sequence(
+  kinase_structure,
+  kinase_sequences
+)
+
+chain_sequence_summary
+```
+
+This helper joins sequence-level and coordinate-level summaries at the chain
+level. In practice, it provides a quick diagnostic for whether the downloaded
+structure and the FASTA content align as expected, and it creates a compact
+table that can be extended with additional chain annotations.
+
+# Workflow 8b: Working with the Rich Object Model
+
+The typed object wrappers are intentionally lightweight. They do not replace
+the underlying data; instead, they add a stable class layer for printing,
+conversion, and helper dispatch.
+
+```{r object-model-local}
+entry_demo <- as_rpdb_entry(
+  data.frame(
+    rcsb_id = c("4HHB", "1CRN"),
+    method = c("X-RAY DIFFRACTION", "SOLUTION NMR"),
+    resolution_combined = c("1.74", NA),
+    stringsAsFactors = FALSE
+  ),
+  metadata = list(example = "local object demo")
+)
+
+entry_demo
+dplyr::as_tibble(entry_demo)
+summarize_entries(entry_demo)
+entry_demo$metadata
+```
+
+This pattern is useful when a workflow needs to preserve both data and context.
+For example, metadata can record which query produced a table or which
+processing choices were applied. The `as_tibble()` methods then let the object
+drop back into a standard tidyverse pipeline without extra conversion code.
+
+```{r structure-object-local}
+structure_demo <- as_rpdb_structure(
+  list(
+    atom = data.frame(
+      chain = c("A", "A"),
+      resno = c(1L, 2L),
+      resid = c("GLY", "ALA"),
+      stringsAsFactors = FALSE
+    ),
+    xyz = c(1, 2, 3, 4, 5, 6),
+    calpha = c(TRUE, FALSE)
+  ),
+  metadata = list(source = "illustration")
+)
+
+structure_demo
+dplyr::as_tibble(structure_demo)
+```
+
+The structure wrapper is especially useful when one analysis session contains
+multiple parsed structures and derived tables. The class layer makes those
+objects easier to distinguish and easier to handle consistently.
+
+# Workflow 9: Downstream Analysis in R
+
+```{r downstream-analysis, eval = live_examples}
+entry_object <- as_rpdb_entry(
+  kinase_metadata,
+  metadata = list(query = "protein kinase entry metadata")
+)
+
+summarize_entries(entry_object)
+
+kinase_summary <- dplyr::as_tibble(entry_object) %>%
+  mutate(
+    molecular_weight = as.numeric(molecular_weight),
+    resolution_combined = as.numeric(resolution_combined),
+    initial_release_date = as.Date(initial_release_date)
+  ) %>%
+  arrange(resolution_combined) %>%
+  select(
+    rcsb_id,
+    title,
+    pdbx_keywords,
+    method,
+    molecular_weight,
+    resolution_combined,
+    initial_release_date
+  )
+
+kinase_summary
+
+kinase_summary %>%
+  summarise(
+    n_structures = n(),
+    median_molecular_weight = median(molecular_weight, na.rm = TRUE),
+    best_resolution = min(resolution_combined, na.rm = TRUE)
+  )
+```
+
+Once the metadata are in a data frame, standard R analysis becomes immediate.
+This chunk ranks the retrieved kinase structures by resolution and computes a
+few simple summaries. Although the analysis is straightforward, it illustrates
+the main advantage of using `rPDBapi`: PDB metadata become ordinary tabular R
+data that can be manipulated with the same tools used elsewhere in
+bioinformatics.
+
+```{r taxonomy-summary, eval = live_examples}
+kinase_polymer_metadata %>%
+  count(ncbi_scientific_name, sort = TRUE)
+```
+
+This example summarizes the source organisms represented in the polymer-entity
+results. A table like this is often the first step in identifying redundancy,
+sampling bias, or opportunities to compare orthologous structures across
+species.
+
+# Workflow 10: Optional Visualization with r3dmol
+
+```{r r3dmol-view, eval = live_examples && have_r3dmol}
+saved_structure <- get_pdb_file(
+  pdb_id = selected_entry,
+  filetype = "pdb",
+  save = TRUE,
+  path = tempdir(),
+  verbosity = FALSE
+)
+
+r3dmol::r3dmol() %>%
+  r3dmol::m_add_model(data = saved_structure$path, format = "pdb") %>%
+  r3dmol::m_set_style(style = r3dmol::m_style_cartoon(color = "spectrum")) %>%
+  r3dmol::m_zoom_to()
+```
+
+This optional chunk demonstrates how `rPDBapi` fits into broader R
+visualization workflows. The package itself focuses on data access and parsing,
+while a tool such as `r3dmol` can be used to render the retrieved structure in
+3D. That separation of responsibilities is useful because it keeps data access,
+analysis, and visualization composable.
+
+# Advanced Search Modalities
+
+The previous sections used text-based and attribute-based search. `rPDBapi`
+also supports sequence, motif, structure, and chemical searches. These are
+especially important in structural bioinformatics, where the biological question
+is often not "Which entry mentions a keyword?" but "Which structures resemble
+this sequence, motif, fold, or ligand chemistry?"
+
+## Sequence Search
+
+```{r sequence-operator}
+kinase_motif_sequence <- "VAIKTLKPGTMSPEAFLQEAQVMKKLRHEKLVQLYAVV"
+
+sequence_operator <- SequenceOperator(
+  sequence = kinase_motif_sequence,
+  sequence_type = "PROTEIN",
+  evalue_cutoff = 10,
+  identity_cutoff = 0.7
+)
+
+sequence_operator
+autoresolve_sequence_type("ATGCGTACGTAGC")
+autoresolve_sequence_type("AUGCGUACGUAGC")
+```
+
+`SequenceOperator()` constructs a sequence-similarity search request. This is
+useful when you have a sequence of interest, such as a kinase domain fragment,
+and want to find structurally characterized homologs in the PDB. The companion
+function `autoresolve_sequence_type()` infers whether a sequence is DNA, RNA,
+or protein, which is helpful for interactive workflows and programmatic
+pipelines that ingest sequences from external sources.
+
+```{r sequence-search, eval = live_examples}
+sequence_hits <- perform_search(
+  search_operator = sequence_operator,
+  return_type = "POLYMER_ENTITY",
+  request_options = RequestOptions(result_start_index = 0, num_results = 5),
+  verbosity = FALSE
+)
+
+sequence_hits
+```
+
+This query asks the RCSB search service for polymer entities similar to the
+input sequence. The polymer-entity return type is appropriate here because
+sequence similarity is defined at the entity level rather than at the whole
+entry level.
+
+## Sequence Motif Search
+
+```{r seqmotif-operator}
+prosite_like_motif <- SeqMotifOperator(
+  pattern = "[LIV]-x-K-[GST]",
+  sequence_type = "PROTEIN",
+  pattern_type = "REGEX"
+)
+
+prosite_like_motif
+```
+
+`SeqMotifOperator()` targets local sequence patterns rather than whole-sequence
+similarity. This is useful for catalytic signatures, binding motifs, or
+short conserved regions that occur across otherwise diverse proteins.
+
+```{r seqmotif-search, eval = live_examples}
+motif_hits <- perform_search(
+  search_operator = prosite_like_motif,
+  return_type = "POLYMER_ENTITY",
+  request_options = RequestOptions(result_start_index = 0, num_results = 5),
+  verbosity = FALSE
+)
+
+motif_hits
+```
+
+Motif search is especially helpful when a biological question depends on a
+functional local pattern rather than on full-length homology. In kinase-related
+work, motifs can help you locate catalytic or regulatory sequence signatures
+across structural entries.
+
+## Structure Similarity Search
+
+```{r structure-operator}
+structure_operator <- StructureOperator(
+  pdb_entry_id = "4HHB",
+  assembly_id = 1,
+  search_mode = "RELAXED_SHAPE_MATCH"
+)
+
+structure_operator
+infer_search_service(structure_operator)
+```
+
+`StructureOperator()` creates a shape-based structure search using an existing
+PDB structure as the template. This is useful when you want to identify
+structures with related global geometry, even if sequence identity is limited.
+`infer_search_service()` confirms that this operator is routed to the structure
+search backend rather than to text or full-text search.
+
+```{r structure-search, eval = live_examples}
+structure_hits <- perform_search(
+  search_operator = structure_operator,
+  return_type = "ASSEMBLY",
+  request_options = RequestOptions(result_start_index = 0, num_results = 5),
+  verbosity = FALSE
+)
+
+structure_hits
+```
+
+Returning assemblies is often sensible for shape-based search because biological
+function frequently depends on the quaternary arrangement of chains rather than
+only on the deposited asymmetric unit.
+
+## Chemical Search
+
+```{r chemical-operator}
+atp_like_operator <- ChemicalOperator(
+  descriptor = "O=P(O)(O)OP(=O)(O)OP(=O)(O)O",
+  matching_criterion = "fingerprint-similarity"
+)
+
+atp_like_operator
+infer_search_service(atp_like_operator)
+```
+
+`ChemicalOperator()` supports ligand-centric workflows by searching the archive
+with a SMILES or InChI descriptor. This is useful when you want to find
+structures containing chemically similar ligands, cofactors, or fragments.
+
+```{r chemical-search, eval = live_examples}
+chemical_hits <- perform_search(
+  search_operator = atp_like_operator,
+  return_type = "CHEMICAL_COMPONENT",
+  request_options = RequestOptions(result_start_index = 0, num_results = 5),
+  verbosity = FALSE
+)
+
+chemical_hits
+```
+
+Here the return type is `CHEMICAL_COMPONENT`, which maps to molecular
+definitions in the RCSB search API. This lets the search focus on ligand
+identities rather than on whole macromolecular entries.
+
+# Complete Search Operator Reference
+
+The operator-based search grammar is one of the most important features of the
+package. The examples below summarize the text-oriented operators that can be
+combined in grouped queries.
+
+```{r operator-reference}
+exact_resolution <- ExactMatchOperator(
+  attribute = "exptl.method",
+  value = "X-RAY DIFFRACTION"
+)
+
+organism_inclusion <- InOperator(
+  attribute = "rcsb_entity_source_organism.taxonomy_lineage.name",
+  value = c("Homo sapiens", "Mus musculus")
+)
+
+title_words <- ContainsWordsOperator(
+  attribute = "struct.title",
+  value = "protein kinase"
+)
+
+title_phrase <- ContainsPhraseOperator(
+  attribute = "struct.title",
+  value = "protein kinase"
+)
+
+resolution_cutoff <- ComparisonOperator(
+  attribute = "rcsb_entry_info.resolution_combined",
+  value = 2.0,
+  comparison_type = "LESS"
+)
+
+resolution_window <- RangeOperator(
+  attribute = "rcsb_entry_info.resolution_combined",
+  from_value = 1.0,
+  to_value = 2.5
+)
+
+doi_exists <- ExistsOperator("rcsb_primary_citation.pdbx_database_id_doi")
+
+list(
+  exact_resolution = exact_resolution,
+  organism_inclusion = organism_inclusion,
+  title_words = title_words,
+  title_phrase = title_phrase,
+  resolution_cutoff = resolution_cutoff,
+  resolution_window = resolution_window,
+  doi_exists = doi_exists
+)
+```
+
+These operator constructors do not perform a search by themselves. Instead,
+they make query intent explicit and composable. That matters when analyses need
+to be read, reviewed, and reproduced months later.
+
+```{r querynode-scoredresult}
+operator_node <- QueryNode(title_words)
+
+composite_query <- QueryGroup(
+  queries = list(title_words, resolution_window, doi_exists),
+  logical_operator = "AND"
+)
+
+scored_example <- ScoredResult(entity_id = "4HHB", score = 0.98)
+
+operator_node
+composite_query
+scored_example
+```
+
+`QueryNode()` and `QueryGroup()` are the glue that turn independent operator
+objects into a full search graph. `ScoredResult()` is a small utility that
+represents the shape of a scored hit and is useful for result handling or for
+teaching the output model used by structure-search APIs.
+
+```{r scored-search-results, eval = live_examples}
+scored_structure_hits <- perform_search(
+  search_operator = structure_operator,
+  return_type = "ASSEMBLY",
+  request_options = RequestOptions(result_start_index = 0, num_results = 3),
+  return_with_scores = TRUE,
+  verbosity = FALSE
+)
+
+scored_structure_hits
+class(scored_structure_hits)
+```
+
+This example shows the difference between returning plain identifiers and
+returning scored hits. In similarity-oriented workflows, the score itself can
+be analytically useful because it helps rank follow-up candidates before any
+metadata are fetched. A common pattern is to inspect scored results first,
+choose a cutoff, and only then retrieve metadata for the retained identifiers.
+
+```{r query-composition-strategy, eval = FALSE}
+# Pattern: build small reusable operators first
+title_filter <- ContainsPhraseOperator("struct.title", "protein kinase")
+resolution_filter <- ComparisonOperator(
+  "rcsb_entry_info.resolution_combined",
+  2.5,
+  "LESS_OR_EQUAL"
+)
+
+# Wrap or combine them only when the biological question is clear
+query_graph <- QueryGroup(
+  queries = list(
+    QueryNode(title_filter),
+    QueryNode(resolution_filter)
+  ),
+  logical_operator = "AND"
+)
+```
+
+This is the main reason to treat operator construction as a separate step. A
+query graph can be assembled gradually, reviewed independently of the network
+request, and reused across multiple searches or result types.
+
+# Query Search Variants and Scan Parameters
+
+`query_search()` is intentionally simpler than `perform_search()`, but it still
+supports several specialized query types as well as low-level request overrides.
+
+```{r query-search-variants, eval = FALSE}
+# PubMed-linked structures
+query_search(search_term = 27499440, query_type = "PubmedIdQuery")
+
+# Organism/taxonomy search
+query_search(search_term = "9606", query_type = "TreeEntityQuery")
+
+# Experimental method search
+query_search(search_term = "X-RAY DIFFRACTION", query_type = "ExpTypeQuery")
+
+# Author search
+query_search(search_term = "Kuriyan, J.", query_type = "AdvancedAuthorQuery")
+
+# UniProt-linked entries
+query_search(search_term = "P31749", query_type = "uniprot")
+
+# PFAM-linked entries
+query_search(search_term = "PF00069", query_type = "pfam")
+```
+
+These convenience modes are useful when the search criterion maps directly to a
+common biological identifier or curation field. They are less flexible than a
+fully operator-based query, but faster to write for routine tasks.
+
+```{r scan-params-example}
+custom_scan_params <- list(
+  request_options = list(
+    paginate = list(start = 0, rows = 5),
+    return_all_hits = FALSE
+  )
+)
+
+custom_scan_params
+```
+
+`scan_params` lets you override the request body that `query_search()` sends to
+the search API. This is useful when you want lightweight access to custom
+pagination or request options without switching fully to `perform_search()`.
+
+```{r query-search-scan-params, eval = live_examples}
+limited_kinase_hits <- query_search(
+  search_term = "protein kinase",
+  scan_params = custom_scan_params
+)
+
+limited_kinase_hits
+```
+
+This example illustrates the practical use of `scan_params`: constrain the
+result set while still using the simpler query helper.
+
+# Complete Metadata Retrieval Surface
+
+The `data_fetcher()` interface supports more than entry and polymer-entity data.
+The main supported data types are:
+
+- `ENTRY`
+- `ASSEMBLY`
+- `POLYMER_ENTITY`
+- `BRANCHED_ENTITY`
+- `NONPOLYMER_ENTITY`
+- `POLYMER_ENTITY_INSTANCE`
+- `BRANCHED_ENTITY_INSTANCE`
+- `NONPOLYMER_ENTITY_INSTANCE`
+- `CHEMICAL_COMPONENT`
+
+This breadth matters because structural records are hierarchical. Different
+questions belong to different levels: entry-level methods, assembly-level
+symmetry, entity-level taxonomy, instance-level chain annotations, and
+component-level ligand chemistry.
+
+## Building Property Lists Incrementally
+
+```{r add-property}
+base_properties <- list(
+  rcsb_entry_info = c("resolution_combined"),
+  exptl = c("method")
+)
+
+extended_properties <- add_property(list(
+  rcsb_entry_info = c("molecular_weight", "resolution_combined"),
+  struct = c("title")
+))
+
+base_properties
+extended_properties
+```
+
+`add_property()` helps construct or merge property specifications without
+duplicating subfields. This is especially useful in interactive analyses, where
+you may start with a minimal query and then progressively request additional
+annotations.
+
+```{r property-design-pattern}
+property_workflow <- add_property(list(
+  rcsb_id = list(),
+  struct = c("title"),
+  rcsb_entry_info = c("resolution_combined")
+))
+
+property_workflow <- add_property(list(
+  rcsb_entry_info = c("molecular_weight", "resolution_combined"),
+  exptl = c("method")
+))
+
+property_workflow
+validate_properties(property_workflow, data_type = "ENTRY", strict = FALSE)
+```
+
+This pattern is useful because GraphQL property lists tend to grow as an
+analysis becomes more specific. Building them incrementally makes it easier to
+keep a compact initial query, add only the fields that become necessary, and
+check that the evolving specification still matches the expected schema.
+
+## Non-polymer and Chemical Component Data
+
+```{r ligand-component-properties}
+ligand_properties <- list(
+  rcsb_id = list(),
+  chem_comp = c("id", "name", "formula", "formula_weight", "type"),
+  rcsb_chem_comp_info = c("initial_release_date")
+)
+
+ligand_properties
+```
+
+This property specification targets chemical components rather than whole
+structures. That distinction is important when the biological focus is on
+ligands, cofactors, inhibitors, or bound metabolites.
+
+```{r chemical-component-fetch, eval = live_examples}
+chemical_component_df <- data_fetcher(
+  id = head(chemical_hits, 3),
+  data_type = "CHEMICAL_COMPONENT",
+  properties = ligand_properties,
+  return_as_dataframe = TRUE
+)
+
+chemical_component_df
+```
+
+The resulting table can be used to compare ligand formulas, molecular weights,
+and release histories. This is often useful in medicinal chemistry and
+structure-based design workflows.
+
+```{r ligand-object-helper, eval = live_examples}
+ligand_object <- as_rpdb_chemical_component(
+  chemical_component_df,
+  metadata = list(query = "ATP-like chemical components")
+)
+
+extract_ligand_table(ligand_object)
+```
+
+`extract_ligand_table()` keeps the most analysis-relevant chemical-component
+columns in a compact form. That is useful when ligand retrieval is only one
+part of a broader workflow and you want a small, stable table for downstream
+joins or ranking.
+
+```{r describe-chemical, eval = live_examples}
+atp_description <- describe_chemical("ATP")
+
+dplyr::tibble(
+  chem_id = "ATP",
+  name = purrr::pluck(atp_description, "chem_comp", "name", .default = NA_character_),
+  formula = purrr::pluck(atp_description, "chem_comp", "formula", .default = NA_character_),
+  formula_weight = purrr::pluck(atp_description, "chem_comp", "formula_weight", .default = NA),
+  smiles = purrr::pluck(atp_description, "rcsb_chem_comp_descriptor", "smiles", .default = NA_character_)
+)
+```
+
+`describe_chemical()` provides a direct route to detailed ligand information for
+a single chemical component. It complements `data_fetcher()` by supporting a
+focused, ligand-centric lookup.
+
+## Instance-Level Retrieval
+
+```{r instance-level-examples, eval = FALSE}
+# Polymer chain instances
+data_fetcher(
+  id = c("4HHB.A"),
+  data_type = "POLYMER_ENTITY_INSTANCE",
+  properties = list(rcsb_id = list())
+)
+
+# Branched entity instances
+data_fetcher(
+  id = c("1ABC_2"),
+  data_type = "BRANCHED_ENTITY_INSTANCE",
+  properties = list(rcsb_id = list())
+)
+
+# Non-polymer entity instances
+data_fetcher(
+  id = c("3PQR_5"),
+  data_type = "NONPOLYMER_ENTITY_INSTANCE",
+  properties = list(rcsb_id = list())
+)
+```
+
+Instance-level retrieval is relevant when chain-level or site-specific
+annotations matter. The exact identifier format depends on the corresponding
+RCSB data type and record level.
+
+# Low-Level API Access and Parsing Helpers
+
+The package exposes lower-level functions for users who need full control over
+HTTP requests, URLs, or response parsing.
+
+```{r low-level-url}
+entry_url <- get_pdb_api_url("core/entry/", "4HHB")
+chem_url <- get_pdb_api_url("core/chemcomp/", "ATP")
+
+entry_url
+chem_url
+```
+
+`get_pdb_api_url()` constructs endpoint-specific URLs. This is a small utility,
+but it makes low-level workflows clearer and reduces hard-coded URL strings in
+custom scripts.
+
+```{r low-level-lifecycle, eval = FALSE}
+# Manual request lifecycle
+url <- get_pdb_api_url("core/entry/", "4HHB")
+response <- send_api_request(url, verbosity = FALSE)
+handle_api_errors(response, url)
+payload <- parse_response(response, format = "json")
+```
+
+This low-level lifecycle is useful when you are developing a new helper,
+debugging an endpoint transition, or comparing package behavior with the raw
+RCSB API. It also makes clear where URL construction, HTTP transport, status
+checking, and parsing are separated inside the package.
+
+```{r low-level-http, eval = live_examples}
+entry_response <- send_api_request(entry_url, verbosity = FALSE)
+handle_api_errors(entry_response, entry_url)
+entry_payload <- parse_response(entry_response, format = "json")
+
+names(entry_payload)[1:5]
+```
+
+These functions expose the package's low-level request stack. `send_api_request()`
+handles the HTTP request, `handle_api_errors()` checks the returned status, and
+`parse_response()` converts the body into an R object. This layer is useful
+when you need to debug endpoint behavior or prototype a new helper around the
+RCSB REST API.
+
+```{r graphql-low-level, eval = live_examples}
+mini_graphql <- generate_json_query(
+  ids = kinase_entry_ids[1:2],
+  data_type = "ENTRY",
+  properties = list(rcsb_id = list(), struct = c("title"))
+)
+
+mini_graphql_response <- search_graphql(mini_graphql)
+
+str(mini_graphql_response, max.level = 2)
+```
+
+`search_graphql()` is the low-level GraphQL entry point. It is useful when you
+want to inspect the raw content returned by the RCSB GraphQL service before it
+is normalized by `fetch_data()` or flattened by `return_data_as_dataframe()`.
+
+# Return Contracts and Error Handling
+
+One of the notable features of the current package version is that core
+functions return typed objects. This improves programmatic safety because code
+can distinguish search identifiers, scored results, raw responses, and flattened
+data frames.
+
+```{r contracts-live, eval = live_examples}
+list(
+  query_search_class = class(query_search("kinase")),
+  perform_search_class = class(
+    perform_search(DefaultOperator("kinase"), verbosity = FALSE)
+  ),
+  perform_search_scores_class = class(
+    perform_search(
+      DefaultOperator("kinase"),
+      return_with_scores = TRUE,
+      verbosity = FALSE
+    )
+  )
+)
+```
+
+The classes shown above make return semantics explicit. In a larger analysis
+pipeline, this reduces ambiguity and makes it easier to validate assumptions at
+each stage of data retrieval.
+
+```{r fetch-contracts, eval = live_examples}
+raw_entry_response <- data_fetcher(
+  id = kinase_entry_ids[1:2],
+  data_type = "ENTRY",
+  properties = list(rcsb_id = list()),
+  return_as_dataframe = FALSE
+)
+
+tidy_entry_response <- data_fetcher(
+  id = kinase_entry_ids[1:2],
+  data_type = "ENTRY",
+  properties = list(rcsb_id = list()),
+  return_as_dataframe = TRUE
+)
+
+class(raw_entry_response)
+class(tidy_entry_response)
+```
+
+This example emphasizes the dual output model of `data_fetcher()`: retain the
+nested payload when structure matters, or request a data frame when analysis
+and integration matter more.
+
+```{r object-contracts, eval = live_examples}
+list(
+  entry_object_class = class(as_rpdb_entry(kinase_metadata)),
+  assembly_object_class = class(as_rpdb_assembly(kinase_assemblies)),
+  polymer_object_class = class(as_rpdb_polymer_entity(kinase_polymer_metadata)),
+  structure_object_class = class(as_rpdb_structure(kinase_structure)),
+  batch_provenance_names = names(attr(kinase_batch, "provenance"))
+)
+```
+
+These richer object wrappers are deliberately lightweight. They preserve the
+underlying data while attaching a semantically meaningful class, which makes it
+easier to define helper methods and to branch on object type in larger
+structural analysis pipelines.
+
+```{r object-methods-local}
+local_entry_object <- as_rpdb_entry(
+  data.frame(
+    rcsb_id = "4HHB",
+    method = "X-RAY DIFFRACTION",
+    resolution_combined = "1.74",
+    stringsAsFactors = FALSE
+  ),
+  metadata = list(source = "local method demo")
+)
+
+print(local_entry_object)
+dplyr::as_tibble(local_entry_object)
+```
+
+This example makes the object behavior explicit. The custom print method gives a
+ concise summary of the wrapped object, while the `as_tibble()` method provides
+an immediate path back to a standard tabular workflow. That combination is the
+main point of the object model: preserve semantic type information without
+making downstream manipulation cumbersome.
+
+```{r defensive-patterns}
+invalid_property_result <- tryCatch(
+  validate_properties(
+    properties = list(unknown_field = c("x")),
+    data_type = "ENTRY",
+    strict = TRUE
+  ),
+  rPDBapi_error_invalid_input = function(e) e
+)
+
+invalid_fetch_result <- tryCatch(
+  data_fetcher(
+    id = character(0),
+    data_type = "ENTRY",
+    properties = list(rcsb_id = list())
+  ),
+  rPDBapi_error_invalid_input = function(e) e
+)
+
+list(
+  invalid_property_class = class(invalid_property_result),
+  invalid_property_message = conditionMessage(invalid_property_result),
+  invalid_fetch_class = class(invalid_fetch_result),
+  invalid_fetch_message = conditionMessage(invalid_fetch_result)
+)
+```
+
+These examples show how typed errors support defensive programming. Instead of
+matching raw error text, a calling workflow can branch on the condition class
+and decide whether to stop, retry, skip a record, or log the problem for later
+review. That is particularly valuable when `rPDBapi` is used inside larger
+automated pipelines.
+
+# Appendix A: Export-by-Export Reference
+
+The table below maps every exported function to its primary role in the package.
+This is not a replacement for the individual help pages, but it does make the
+full surface area of the package explicit inside a single tutorial document.
+
+```{r export-reference, results = "asis"}
+export_reference <- data.frame(
+  Function = c(
+    "query_search", "perform_search", "DefaultOperator", "ExactMatchOperator",
+    "InOperator", "ContainsWordsOperator", "ContainsPhraseOperator",
+    "ComparisonOperator", "RangeOperator", "ExistsOperator",
+    "SequenceOperator", "autoresolve_sequence_type", "SeqMotifOperator",
+    "StructureOperator", "ChemicalOperator", "QueryNode", "QueryGroup",
+    "RequestOptions", "ScoredResult", "infer_search_service",
+    "infer_id_type", "parse_rcsb_id", "build_entry_id", "build_assembly_id",
+    "build_entity_id", "build_instance_id", "add_property",
+    "list_rcsb_fields", "search_rcsb_fields", "validate_properties",
+    "generate_json_query", "search_graphql", "fetch_data",
+    "return_data_as_dataframe", "data_fetcher", "data_fetcher_batch",
+    "cache_info", "clear_rpdbapi_cache", "get_info", "find_results",
+    "find_papers", "describe_chemical", "get_fasta_from_rcsb_entry",
+    "get_pdb_file", "get_pdb_api_url", "send_api_request",
+    "handle_api_errors", "parse_response", "as_rpdb_entry",
+    "as_rpdb_assembly", "as_rpdb_polymer_entity",
+    "as_rpdb_chemical_component", "as_rpdb_structure",
+    "summarize_entries", "summarize_assemblies",
+    "extract_taxonomy_table", "extract_ligand_table",
+    "extract_calpha_coordinates", "join_structure_sequence"
+  ),
+  Role = c(
+    "High-level convenience search helper",
+    "Operator-based search engine",
+    "Full-text search operator",
+    "Exact attribute match operator",
+    "Set-membership operator",
+    "Word containment operator",
+    "Phrase containment operator",
+    "Numeric/date comparison operator",
+    "Range filter operator",
+    "Attribute existence operator",
+    "Sequence similarity search operator",
+    "Automatic DNA/RNA/protein detection",
+    "Sequence motif search operator",
+    "Structure similarity search operator",
+    "Chemical descriptor search operator",
+    "Wrap one operator as a query node",
+    "Combine nodes with AND/OR logic",
+    "Pagination and sorting controls",
+    "Represent a scored hit",
+    "Infer backend service from operator",
+    "Infer identifier level from an ID string",
+    "Parse an identifier into structured components",
+    "Normalize or build entry identifiers",
+    "Build assembly identifiers",
+    "Build entity identifiers",
+    "Build instance or chain identifiers",
+    "Merge/extend GraphQL property lists",
+    "List known retrievable fields by data type",
+    "Search the built-in field registry",
+    "Validate a property list against the field registry",
+    "Build a GraphQL query string",
+    "Low-level GraphQL request helper",
+    "Normalize validated GraphQL payloads",
+    "Flatten nested payloads into data frames",
+    "High-level metadata fetcher",
+    "Batch metadata fetcher with retry and provenance",
+    "Inspect batch-cache contents",
+    "Clear on-disk cache entries",
+    "Retrieve full entry metadata",
+    "Extract one field across search hits",
+    "Extract primary citation titles",
+    "Retrieve ligand/chemical-component details",
+    "Retrieve FASTA sequences",
+    "Download and parse structure files",
+    "Build REST endpoint URLs",
+    "Send low-level GET/POST requests",
+    "Check HTTP status and stop on error",
+    "Parse JSON or text responses",
+    "Wrap entry data in a typed object",
+    "Wrap assembly data in a typed object",
+    "Wrap polymer-entity data in a typed object",
+    "Wrap chemical-component data in a typed object",
+    "Wrap structure data in a typed object",
+    "Summarize entry-level metadata",
+    "Summarize assembly-level metadata",
+    "Extract taxonomy-focused columns",
+    "Extract ligand-focused columns",
+    "Extract C-alpha coordinates",
+    "Join sequence summaries to chain coordinates"
+  ),
+  stringsAsFactors = FALSE
+)
+
+knitr::kable(export_reference, align = c("l", "l"))
+```
+
+This table is intended as a package navigation aid. It makes it easier to
+identify whether a task belongs to searching, retrieval, parsing, or lower-level
+API control before you start writing a workflow.
+
+# Appendix B: Minimal Example Pattern for Every Export
+
+The next block gives a compact usage sketch for every exported function. These
+examples are deliberately short and grouped by role so that users can quickly
+find a starting pattern.
+
+```{r every-export-pattern, eval = FALSE}
+# Search helpers
+query_search("kinase")
+perform_search(DefaultOperator("kinase"), verbosity = FALSE)
+
+# Text and attribute operators
+DefaultOperator("kinase")
+ExactMatchOperator("exptl.method", "X-RAY DIFFRACTION")
+InOperator("rcsb_entity_source_organism.taxonomy_lineage.name", c("Homo sapiens", "Mus musculus"))
+ContainsWordsOperator("struct.title", "protein kinase")
+ContainsPhraseOperator("struct.title", "protein kinase")
+ComparisonOperator("rcsb_entry_info.resolution_combined", 2.0, "LESS")
+RangeOperator("rcsb_entry_info.resolution_combined", 1.0, 2.5)
+ExistsOperator("rcsb_primary_citation.pdbx_database_id_doi")
+
+# Specialized operators
+SequenceOperator("MVLSPADKTNVKAAW", sequence_type = "PROTEIN")
+autoresolve_sequence_type("ATGCGTACGTAGC")
+SeqMotifOperator("[LIV]-x-K-[GST]", "PROTEIN", "REGEX")
+StructureOperator("4HHB", assembly_id = 1, search_mode = "RELAXED_SHAPE_MATCH")
+ChemicalOperator("C1=CC=CC=C1", matching_criterion = "graph-strict")
+
+# Query composition
+QueryNode(DefaultOperator("kinase"))
+QueryGroup(list(DefaultOperator("kinase"), ExistsOperator("rcsb_primary_citation.title")), "AND")
+RequestOptions(result_start_index = 0, num_results = 10)
+ScoredResult("4HHB", 0.98)
+infer_search_service(StructureOperator("4HHB"))
+infer_id_type(c("4HHB", "4HHB-1", "4HHB_1", "4HHB.A", "ATP"))
+parse_rcsb_id("4HHB-1")
+build_entry_id("4HHB")
+build_assembly_id("4HHB", 1)
+build_entity_id("4HHB", 1)
+build_instance_id("4HHB", "A")
+
+# Metadata helpers
+add_property(list(rcsb_entry_info = c("resolution_combined")))
+list_rcsb_fields("ENTRY")
+search_rcsb_fields("resolution", data_type = "ENTRY")
+validate_properties(
+  list(rcsb_id = list(), rcsb_entry_info = c("resolution_combined")),
+  data_type = "ENTRY",
+  strict = TRUE
+)
+generate_json_query(c("4HHB"), "ENTRY", list(rcsb_id = list(), struct = c("title")))
+search_graphql(generate_json_query(c("4HHB"), "ENTRY", list(rcsb_id = list())))
+fetch_data(generate_json_query(c("4HHB"), "ENTRY", list(rcsb_id = list())), "ENTRY", "4HHB")
+return_data_as_dataframe(
+  fetch_data(generate_json_query(c("4HHB"), "ENTRY", list(rcsb_id = list())), "ENTRY", "4HHB"),
+  "ENTRY",
+  "4HHB"
+)
+data_fetcher("4HHB", "ENTRY", list(rcsb_id = list(), struct = c("title")))
+data_fetcher_batch(
+  c("4HHB", "1CRN"),
+  "ENTRY",
+  list(rcsb_id = list(), struct = c("title")),
+  batch_size = 1,
+  cache = FALSE
+)
+cache_info()
+clear_rpdbapi_cache()
+get_info("4HHB")
+find_results("kinase", field = "struct_keywords")
+find_papers("kinase", max_results = 3)
+describe_chemical("ATP")
+get_fasta_from_rcsb_entry("4HHB")
+
+# Files and low-level HTTP
+get_pdb_file("4HHB", filetype = "cif", verbosity = FALSE)
+get_pdb_api_url("core/entry/", "4HHB")
+resp <- send_api_request(get_pdb_api_url("core/entry/", "4HHB"), verbosity = FALSE)
+handle_api_errors(resp, get_pdb_api_url("core/entry/", "4HHB"))
+parse_response(resp, format = "json")
+
+# Object wrappers and analysis helpers
+as_rpdb_entry(data.frame(rcsb_id = "4HHB"))
+as_rpdb_assembly(data.frame(rcsb_id = "4HHB-1"))
+as_rpdb_polymer_entity(data.frame(rcsb_id = "4HHB_1"))
+as_rpdb_chemical_component(data.frame(rcsb_id = "ATP"))
+as_rpdb_structure(get_pdb_file("4HHB", filetype = "cif", verbosity = FALSE))
+summarize_entries(data.frame(method = "X-RAY DIFFRACTION", resolution_combined = "1.8"))
+summarize_assemblies(data.frame(oligomeric_count = "2", symbol = "C2"))
+extract_taxonomy_table(data.frame(rcsb_id = "4HHB_1", ncbi_taxonomy_id = "9606"))
+extract_ligand_table(data.frame(rcsb_id = "ATP", formula_weight = "507.18"))
+extract_calpha_coordinates(get_pdb_file("4HHB", filetype = "cif", verbosity = FALSE))
+join_structure_sequence(
+  get_pdb_file("4HHB", filetype = "cif", verbosity = FALSE),
+  get_fasta_from_rcsb_entry("4HHB")
+)
+```
+
+This appendix is intentionally compact. Its purpose is not to replace the
+narrative examples above, but to ensure that every exported function has an
+immediately visible calling pattern in the vignette.
+
+# Appendix C: Supported Identifier Levels and Typical Formats
+
+One source of confusion in the RCSB ecosystem is that different endpoints expect
+different identifier types. The table below summarizes the levels supported by
+`data_fetcher()` and the search return types used in `perform_search()`.
+
+```{r id-format-table, results = "asis"}
+id_reference <- data.frame(
+  Data_or_Return_Type = c(
+    "ENTRY", "ASSEMBLY", "POLYMER_ENTITY", "BRANCHED_ENTITY",
+    "NONPOLYMER_ENTITY", "POLYMER_ENTITY_INSTANCE",
+    "BRANCHED_ENTITY_INSTANCE", "NONPOLYMER_ENTITY_INSTANCE",
+    "CHEMICAL_COMPONENT"
+  ),
+  Typical_ID_Format = c(
+    "4-character PDB ID, e.g. 4HHB",
+    "Entry plus assembly ID, e.g. 4HHB-1",
+    "Entry plus entity ID, e.g. 4HHB_1",
+    "Entry plus branched entity ID",
+    "Entry plus nonpolymer entity ID, e.g. 3PQR_5",
+    "Instance or chain-level identifier, endpoint-specific",
+    "Instance-level identifier, endpoint-specific",
+    "Instance-level identifier, endpoint-specific",
+    "Chemical component ID, e.g. ATP"
+  ),
+  Typical_Use = c(
+    "Whole-structure metadata",
+    "Biological assembly and symmetry",
+    "Entity-level taxonomy or sequence annotations",
+    "Glycan/branched entity records",
+    "Ligand records within structures",
+    "Chain-specific annotations",
+    "Branched entity instance records",
+    "Ligand instance records",
+    "Ligand chemistry and descriptors"
+  ),
+  stringsAsFactors = FALSE
+)
+
+knitr::kable(id_reference, align = c("l", "l", "l"))
+```
+
+The precise identifier syntax for instance-level records depends on the RCSB
+schema and endpoint, but the key conceptual point is that the package supports
+multiple biological levels and expects identifiers that match those levels.
+The identifier helpers introduced in the current version make this easier to
+manage explicitly: `infer_id_type()` classifies common patterns,
+`parse_rcsb_id()` decomposes them, and the `build_*_id()` functions generate
+normalized identifiers programmatically.
+
+# Appendix D: Return Classes and Their Meaning
+
+The package uses return classes as lightweight contracts. The most important
+ones are summarized here.
+
+```{r return-contract-table, results = "asis"}
+contract_reference <- data.frame(
+  Function = c(
+    "query_search(return_type = 'entry')",
+    "query_search(other return_type)",
+    "perform_search()",
+    "perform_search(return_with_scores = TRUE)",
+    "perform_search(return_raw_json_dict = TRUE)",
+    "fetch_data()",
+    "data_fetcher_batch(return_as_dataframe = TRUE)",
+    "data_fetcher(return_as_dataframe = TRUE)",
+    "data_fetcher(return_as_dataframe = FALSE)",
+    "as_rpdb_entry()",
+    "as_rpdb_assembly()",
+    "as_rpdb_polymer_entity()",
+    "as_rpdb_chemical_component()",
+    "as_rpdb_structure()"
+  ),
+  Return_Class = c(
+    "rPDBapi_query_ids",
+    "rPDBapi_query_response",
+    "rPDBapi_search_ids",
+    "rPDBapi_search_scores",
+    "rPDBapi_search_raw_response",
+    "rPDBapi_fetch_response",
+    "rPDBapi_dataframe",
+    "rPDBapi_dataframe",
+    "rPDBapi_fetch_response",
+    "rPDBapi_entry",
+    "rPDBapi_assembly",
+    "rPDBapi_polymer_entity",
+    "rPDBapi_chemical_component",
+    "rPDBapi_structure"
+  ),
+  Meaning = c(
+    "Identifier vector from query_search()",
+    "Parsed query_search payload",
+    "Identifier vector from perform_search()",
+    "Scored search results",
+    "Raw JSON-like search payload",
+    "Validated GraphQL fetch payload",
+    "Flattened batch result with provenance metadata",
+    "Flattened analysis-ready table",
+    "Nested validated fetch payload",
+    "Typed entry wrapper around retrieved data",
+    "Typed assembly wrapper around retrieved data",
+    "Typed polymer-entity wrapper around retrieved data",
+    "Typed chemical-component wrapper around retrieved data",
+    "Typed structure wrapper around retrieved data"
+  ),
+  stringsAsFactors = FALSE
+)
+
+knitr::kable(contract_reference, align = c("l", "l", "l"))
+```
+
+These classes are useful when writing wrappers, tests, or pipelines that need
+to branch on the kind of object returned by the package.
+
+# Appendix E: Error and Failure-Mode Guidance
+
+The package also uses typed errors in several important places. Users do not
+need to memorize these classes for normal interactive work, but they are useful
+for robust scripting and package development.
+
+```{r error-guidance}
+error_guidance <- data.frame(
+  Scenario = c(
+    "Malformed search response",
+    "Unsupported return-type mapping",
+    "Invalid input to search/fetch helper",
+    "Unknown property or subproperty in strict mode",
+    "Batch retrieval failure after retries",
+    "HTTP failure",
+    "Response parsing failure"
+  ),
+  Typical_Class_or_Source = c(
+    "rPDBapi_error_malformed_response",
+    "rPDBapi_error_unsupported_mapping",
+    "rPDBapi_error_invalid_input",
+    "validate_properties() / generate_json_query()",
+    "data_fetcher_batch()",
+    "handle_api_errors() / send_api_request()",
+    "parse_response()"
+  ),
+  stringsAsFactors = FALSE
+)
+
+knitr::kable(error_guidance, align = c("l", "l"))
+```
+
+In practice, these classes matter when you want to distinguish network failures
+from schema mismatches or user-input errors. That distinction is particularly
+important in automated structural bioinformatics pipelines that may run over
+many identifiers.
+
+# Reproducible Research with rPDBapi
+
+Programmatic structure retrieval is most useful when the search logic and the
+retrieved identifiers are stored alongside the analysis. A practical workflow is
+to save:
+  
+  - the query object used for the search
+- the vector of returned identifiers
+- the selected metadata fields
+- the property-validation mode and identifier-construction rules
+- any batch provenance or cache configuration
+- object-level metadata attached to typed wrappers
+- the session information and package versions
+
+```{r reproducibility}
+analysis_manifest <- list(
+  live_examples = live_examples,
+  package_version = as.character(utils::packageVersion("rPDBapi")),
+  query = kinase_query,
+  requested_entry_fields = entry_properties,
+  strict_property_validation = getOption("rPDBapi.strict_property_validation", FALSE),
+  built_ids = list(
+    entry = build_entry_id("4HHB"),
+    assembly = build_assembly_id("4HHB", 1),
+    entity = build_entity_id("4HHB", 1),
+    instance = build_instance_id("4HHB", "A")
+  ),
+  batch_provenance_example = if (live_examples) {
+    attr(kinase_batch, "provenance")
+  } else {
+    NULL
+  }
+)
+
+str(analysis_manifest, max.level = 2)
+```
+
+This manifest is a simple example of how to preserve the logic of an analysis.
+Because the search operators and requested fields are explicit R objects, they
+can be saved with `saveRDS()` and reused later. That is a better long-term
+strategy than relying on manual notes about which website filters were used.
+When batch retrieval is part of the workflow, the provenance attribute from
+`data_fetcher_batch()` provides an additional audit trail for how the data were
+obtained.
+
+# Summary
+
+`rPDBapi` supports an end-to-end workflow for structural bioinformatics in R:
+  search the archive, refine the result set with explicit operators, validate
+properties against known schema fields, work across identifier levels,
+retrieve entry-, entity-, and assembly-level metadata, scale retrieval with
+batch and cache-aware helpers, convert nested responses into tidy data frames
+or typed objects, download coordinate files, and integrate the results with
+analysis and visualization packages. This workflow is useful not only for
+exploratory access to the PDB, but also for reproducible, scriptable analyses
+that can be revised and rerun as biological questions evolve.
+
+# Session Information
+
+```{r session-info}
+sessionInfo()
+```
+
+Session information is included so that rendered results can be tied to a
+specific R and package environment. This is a standard but important part of
+reproducible computational biology documentation.

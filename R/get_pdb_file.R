@@ -145,7 +145,13 @@ get_pdb_file <- function(pdb_id, filetype = 'cif', rm.insert = FALSE, rm.alt = T
 
   # Validate the input filetype
   if (!filetype %in% c('cif', 'pdb', 'xml', 'structfact')) {
-    stop("Unsupported filetype: '", filetype, "'. Please use one of the following: 'cif', 'pdb', 'xml', 'structfact'.")
+    rpdbapi_abort(
+      paste0("Unsupported filetype: '", filetype, "'. Please use one of the following: 'cif', 'pdb', 'xml', 'structfact'."),
+      class = "rPDBapi_error_invalid_input",
+      function_name = "get_pdb_file",
+      pdb_id = pdb_id,
+      filetype = filetype
+    )
   }
 
   if (filetype == 'cif' && !compression) {
@@ -169,7 +175,14 @@ get_pdb_file <- function(pdb_id, filetype = 'cif', rm.insert = FALSE, rm.alt = T
       send_api_request(url = pdb_url)
     },
     error = function(e) {
-      stop("Network Error: Failed to retrieve data for PDB ID '", pdb_id, "'. Error: ", e$message)
+      rpdbapi_rethrow(
+        e,
+        message_prefix = paste0("Network Error: Failed to retrieve data for PDB ID '", pdb_id, "'. Error: "),
+        class = "rPDBapi_error_network",
+        wrap_typed = TRUE,
+        function_name = "get_pdb_file",
+        pdb_id = pdb_id
+      )
     }
   )
 
@@ -179,7 +192,14 @@ get_pdb_file <- function(pdb_id, filetype = 'cif', rm.insert = FALSE, rm.alt = T
       handle_api_errors(response, pdb_url)
     },
     error = function(e) {
-      stop("API Error: Failed to retrieve data for PDB ID '", pdb_id, "'. Error: ", e$message)
+      rpdbapi_rethrow(
+        e,
+        message_prefix = paste0("API Error: Failed to retrieve data for PDB ID '", pdb_id, "'. Error: "),
+        class = "rPDBapi_error_http",
+        wrap_typed = TRUE,
+        function_name = "get_pdb_file",
+        pdb_id = pdb_id
+      )
     }
   )
 
@@ -194,7 +214,13 @@ get_pdb_file <- function(pdb_id, filetype = 'cif', rm.insert = FALSE, rm.alt = T
     path <- file.path(tempdir(), filename)
   } else {
     if (!dir.exists(path)) {
-      stop("Specified path does not exist: ", path)
+      rpdbapi_abort(
+        paste0("Specified path does not exist: ", path),
+        class = "rPDBapi_error_invalid_input",
+        function_name = "get_pdb_file",
+        pdb_id = pdb_id,
+        path = path
+      )
     }
     path <- file.path(path, filename)
   }
@@ -205,7 +231,14 @@ get_pdb_file <- function(pdb_id, filetype = 'cif', rm.insert = FALSE, rm.alt = T
       download.file(response$url, path, quiet = TRUE)
     },
     error = function(e) {
-      stop("Failed to download the PDB file: ", e$message)
+      rpdbapi_rethrow(
+        e,
+        message_prefix = "Failed to download the PDB file: ",
+        class = "rPDBapi_error_network",
+        wrap_typed = TRUE,
+        function_name = "get_pdb_file",
+        pdb_id = pdb_id
+      )
     }
   )
 
@@ -220,11 +253,24 @@ get_pdb_file <- function(pdb_id, filetype = 'cif', rm.insert = FALSE, rm.alt = T
         xml_file <- read_xml(path)
         as_list(xml_file)
       } else {
-        stop("Unsupported filetype encountered during file reading: '", filetype, "'.")
+        rpdbapi_abort(
+          paste0("Unsupported filetype encountered during file reading: '", filetype, "'."),
+          class = "rPDBapi_error_invalid_input",
+          function_name = "get_pdb_file",
+          pdb_id = pdb_id,
+          filetype = filetype
+        )
       }
     },
     error = function(e) {
-      stop("Failed to read the downloaded PDB file: ", e$message)
+      rpdbapi_rethrow(
+        e,
+        message_prefix = "Failed to read the downloaded PDB file: ",
+        class = "rPDBapi_error_malformed_response",
+        wrap_typed = TRUE,
+        function_name = "get_pdb_file",
+        pdb_id = pdb_id
+      )
     }
   )
 
@@ -241,7 +287,13 @@ get_pdb_file <- function(pdb_id, filetype = 'cif', rm.insert = FALSE, rm.alt = T
   # Process only coordinate-bearing formats.
   if (filetype %in% c("pdb", "cif")) {
     if (!is.null(result$error)) {
-      stop("Error encountered in reading the file: ", path)
+      rpdbapi_abort(
+        paste0("Error encountered in reading the file: ", path),
+        class = "rPDBapi_error_malformed_response",
+        function_name = "get_pdb_file",
+        pdb_id = pdb_id,
+        path = path
+      )
     } else {
       class(result) <- c("pdb")
     }

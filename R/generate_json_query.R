@@ -59,6 +59,9 @@
 
 
 generate_json_query <- function(ids, data_type, properties) {
+  ids <- rpdbapi_prepare_ids(ids, data_type = data_type)
+  rpdbapi_maybe_validate_properties(properties = properties, data_type = data_type)
+
   if (length(properties) == 0) {
     stop("ERROR: no properties given to generate JSON query.")
   }

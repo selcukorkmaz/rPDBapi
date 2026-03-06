@@ -10,7 +10,7 @@ Description: Streamlines the interaction with the 'RCSB' Protein Data Bank ('PDB
             powerful tool for searching and retrieving a diverse range of data types from the 'PDB'. It includes advanced functionalities like 
             BLAST and sequence motif queries. Built upon the existing XML-based API of the 'PDB', it simplifies the creation of custom requests, 
             thereby enhancing usability and flexibility for researchers.
-License: GPL (>= 2)
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Imports: 
@@ -24,5 +24,8 @@ Imports:
     methods
 Suggests:
     r3dmol,
+    knitr,
+    rmarkdown,
     testthat
+VignetteBuilder: knitr
 RoxygenNote: 7.3.2

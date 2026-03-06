@@ -179,54 +179,27 @@ perform_search <- function(search_operator, return_type = "ENTRY", request_optio
 
 perform_search_with_graph <- function(query_object, return_type = "ENTRY", request_options = NULL, return_with_scores = FALSE,
                                       return_raw_json_dict = FALSE, verbosity = TRUE, search_url_endpoint = SEARCH_URL_ENDPOINT) {
-  # Validate return_type
-  supported_return_types <- names(ReturnType)
-  if (!return_type %in% supported_return_types) {
-    rpdbapi_abort(
-      paste0(
-        "Invalid return_type '", return_type, "'. Supported types are: '",
-        paste(supported_return_types, collapse = "', '"), "'."
-      ),
-      class = "rPDBapi_error_unsupported_mapping",
-      function_name = "perform_search_with_graph",
-      return_type = return_type
-    )
-  }
+  rpdbapi_validate_perform_return_type(return_type)
 
-  # Cast query object if necessary
   cast_query_object <- tryCatch(
     {
-      if ((is.null(query_object$operator) || query_object$operator %in% SEARCH_OPERATORS) && is.null(query_object$type)) {
-        QueryNode(query_object)
-      } else {
-        query_object
-      }
+      rpdbapi_cast_query_object(query_object)
     },
     error = function(e) {
-      stop("Failed to process the query object: ", e$message)
+      rpdbapi_rethrow(
+        e,
+        message_prefix = "Failed to process the query object: ",
+        class = "rPDBapi_error_invalid_input",
+        function_name = "perform_search_with_graph"
+      )
     }
   )
 
-  request_options_dict <- if (!is.null(request_options)) {
-    request_options
-  } else {
-    list(return_all_hits = TRUE)
-  }
-
-  rcsb_query_dict <- list(
-    query = cast_query_object,
-    request_options = request_options_dict,
-    return_type = ReturnType[[return_type]]
+  rcsb_query_dict <- rpdbapi_build_search_request(
+    cast_query_object = cast_query_object,
+    return_type = return_type,
+    request_options = request_options
   )
-
-  if (is.null(rcsb_query_dict$return_type)) {
-    rpdbapi_abort(
-      paste0("Internal mapping error: no API return_type mapping found for '", return_type, "'."),
-      class = "rPDBapi_error_unsupported_mapping",
-      function_name = "perform_search_with_graph",
-      return_type = return_type
-    )
-  }
 
   if (verbosity) {
     message("Querying RCSB Search with the following parameters:\n", toJSON(rcsb_query_dict, auto_unbox = TRUE, pretty = TRUE))
@@ -234,81 +207,39 @@ perform_search_with_graph <- function(query_object, return_type = "ENTRY", reque
 
   response <- tryCatch(
     {
-      POST(
+      rpdbapi_http_request(
         url = search_url_endpoint,
+        method = "POST",
         body = rcsb_query_dict,
         encode = "json",
-        content_type("application/json")
+        content_type_value = "application/json"
       )
     },
     error = function(e) {
-      stop("HTTP request to RCSB failed: ", e$message)
+      rpdbapi_rethrow(
+        e,
+        message_prefix = "HTTP request to RCSB failed: ",
+        class = "rPDBapi_error_network",
+        function_name = "perform_search_with_graph"
+      )
     }
   )
 
-  if (http_status(response)$category != "Success") {
-    stop("RCSB search request failed with status ", http_status(response)$status, ": ", http_status(response)$message, "\nResponse content: ", content(response, "text", encoding = "UTF-8"))
-  }
-
-  content <- tryCatch(
-    {
-      content(response, "text", encoding = "UTF-8")
-    },
-    error = function(e) {
-      stop("Failed to retrieve content from RCSB response: ", e$message)
-    }
-  )
-
-  response_json <- tryCatch(
-    {
-      fromJSON(content)
-    },
-    error = function(e) {
-      stop("Failed to parse RCSB response as JSON: ", e$message, "\nResponse content: ", content)
-    }
-  )
-
-  if (!is.list(response_json) || is.null(response_json$result_set)) {
+  if (!rpdbapi_http_success(response)) {
     rpdbapi_abort(
-      "Malformed search response: missing 'result_set'.",
-      class = "rPDBapi_error_malformed_response",
-      function_name = "perform_search_with_graph"
+      paste0("RCSB search request failed with status ", rpdbapi_http_status_code(response), ": ", rpdbapi_http_status_message(response), "\nResponse content: ", rpdbapi_response_text(response)),
+      class = "rPDBapi_error_http",
+      function_name = "perform_search_with_graph",
+      status = rpdbapi_http_status_code(response),
+      status_message = rpdbapi_http_status_message(response)
     )
   }
 
-  if (return_raw_json_dict) {
-    response_json <- rpdbapi_add_class(response_json, "rPDBapi_search_raw_response")
-    return(response_json)
-  }
-
-  results <- tryCatch(
-    {
-      if (return_with_scores) {
-        response_json$result_set
-      } else {
-        response_json$result_set$identifier
-      }
-    },
-    error = function(e) {
-      stop("Failed to extract results from RCSB response JSON: ", e$message)
-    }
+  response_json <- rpdbapi_parse_search_response_json(response)
+  rpdbapi_extract_search_results(
+    response_json = response_json,
+    return_with_scores = return_with_scores,
+    return_raw_json_dict = return_raw_json_dict
   )
-
-  if (is.null(results)) {
-    rpdbapi_abort(
-      "No results were found for the given query. Please check your search criteria.",
-      class = "rPDBapi_error_malformed_response",
-      function_name = "perform_search_with_graph"
-    )
-  }
-
-  if (return_with_scores) {
-    results <- rpdbapi_add_class(results, "rPDBapi_search_scores")
-  } else {
-    results <- as.character(results)
-    results <- rpdbapi_add_class(results, "rPDBapi_search_ids")
-  }
-
-  return(results)
 }
 

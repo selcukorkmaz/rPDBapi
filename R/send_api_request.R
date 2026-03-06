@@ -27,16 +27,24 @@ send_api_request <- function(url, method = "GET", body = NULL, encode = "json", 
 
   response <- tryCatch(
     {
-      if (toupper(method) == "POST") {
-        POST(url, body = body, encode = encode, content_type(content_type))
-      } else if (toupper(method) == "GET") {
-        GET(url)
-      } else {
-        stop("Unsupported HTTP method: ", method)
-      }
+      rpdbapi_http_request(
+        url = url,
+        method = method,
+        body = body,
+        encode = encode,
+        content_type_value = content_type
+      )
     },
     error = function(e) {
-      stop("Network Error: Failed to send request. Error: ", e$message)
+      rpdbapi_rethrow(
+        e,
+        message_prefix = "Network Error: Failed to send request. Error: ",
+        class = "rPDBapi_error_network",
+        wrap_typed = TRUE,
+        function_name = "send_api_request",
+        url = url,
+        method = toupper(method)
+      )
     }
   )
 

@@ -29,7 +29,12 @@
 describe_chemical <- function(chem_id, url_root = URL_ROOT) {
   # Validate the input chemical ID
   if (nchar(chem_id) > 3) {
-    stop("Input Error: The provided ligand ID '", chem_id, "' exceeds the maximum allowed length of 3 characters. Please provide a valid 3-character ligand ID.")
+    rpdbapi_abort(
+      paste0("Input Error: The provided ligand ID '", chem_id, "' exceeds the maximum allowed length of 3 characters. Please provide a valid 3-character ligand ID."),
+      class = "rPDBapi_error_invalid_input",
+      function_name = "describe_chemical",
+      chem_id = chem_id
+    )
   }
 
   # Construct the URL for the API request
@@ -41,7 +46,14 @@ describe_chemical <- function(chem_id, url_root = URL_ROOT) {
       send_api_request(url = url)
     },
     error = function(e) {
-      stop("Network Error: Failed to retrieve data for ligand ID '", chem_id, "'. Error: ", e$message)
+      rpdbapi_rethrow(
+        e,
+        message_prefix = paste0("Network Error: Failed to retrieve data for ligand ID '", chem_id, "'. Error: "),
+        class = "rPDBapi_error_network",
+        wrap_typed = TRUE,
+        function_name = "describe_chemical",
+        chem_id = chem_id
+      )
     }
   )
 
@@ -51,7 +63,14 @@ describe_chemical <- function(chem_id, url_root = URL_ROOT) {
       handle_api_errors(response, url)
     },
     error = function(e) {
-      stop("API Error: Failed to retrieve data for ligand ID '", chem_id, "'. Error: ", e$message)
+      rpdbapi_rethrow(
+        e,
+        message_prefix = paste0("API Error: Failed to retrieve data for ligand ID '", chem_id, "'. Error: "),
+        class = "rPDBapi_error_http",
+        wrap_typed = TRUE,
+        function_name = "describe_chemical",
+        chem_id = chem_id
+      )
     }
   )
 
@@ -61,7 +80,14 @@ describe_chemical <- function(chem_id, url_root = URL_ROOT) {
       parse_response(response, format = "json")
     },
     error = function(e) {
-      stop("Parsing Error: Failed to parse the JSON response for ligand ID '", chem_id, "'. Error: ", e$message)
+      rpdbapi_rethrow(
+        e,
+        message_prefix = paste0("Parsing Error: Failed to parse the JSON response for ligand ID '", chem_id, "'. Error: "),
+        class = "rPDBapi_error_malformed_response",
+        wrap_typed = TRUE,
+        function_name = "describe_chemical",
+        chem_id = chem_id
+      )
     }
   )
 

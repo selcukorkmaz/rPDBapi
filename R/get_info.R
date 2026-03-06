@@ -46,7 +46,14 @@ get_info <- function(pdb_id) {
       send_api_request(url = url)
     },
     error = function(e) {
-      stop("Network Error: Failed to retrieve data from the RCSB PDB for PDB ID '", pdb_id, "'. Error: ", e$message)
+      rpdbapi_rethrow(
+        e,
+        message_prefix = paste0("Network Error: Failed to retrieve data from the RCSB PDB for PDB ID '", pdb_id, "'. Error: "),
+        class = "rPDBapi_error_network",
+        wrap_typed = TRUE,
+        function_name = "get_info",
+        pdb_id = pdb_id
+      )
     }
   )
 
@@ -56,7 +63,14 @@ get_info <- function(pdb_id) {
       handle_api_errors(response, url)
     },
     error = function(e) {
-      stop("API Error: Failed to retrieve data for PDB ID '", pdb_id, "'. Error: ", e$message)
+      rpdbapi_rethrow(
+        e,
+        message_prefix = paste0("API Error: Failed to retrieve data for PDB ID '", pdb_id, "'. Error: "),
+        class = "rPDBapi_error_http",
+        wrap_typed = TRUE,
+        function_name = "get_info",
+        pdb_id = pdb_id
+      )
     }
   )
 
@@ -66,7 +80,14 @@ get_info <- function(pdb_id) {
       parse_response(response, format = "json")
     },
     error = function(e) {
-      stop("Parsing Error: Failed to parse the JSON response from the RCSB PDB for PDB ID '", pdb_id, "'. Error: ", e$message)
+      rpdbapi_rethrow(
+        e,
+        message_prefix = paste0("Parsing Error: Failed to parse the JSON response from the RCSB PDB for PDB ID '", pdb_id, "'. Error: "),
+        class = "rPDBapi_error_malformed_response",
+        wrap_typed = TRUE,
+        function_name = "get_info",
+        pdb_id = pdb_id
+      )
     }
   )
 

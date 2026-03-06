@@ -13,14 +13,26 @@
 #' @export
 
 search_graphql <- function(graphql_json_query, graphql_url = GRAPHQL_URL) {
-  response <- POST(url = graphql_url, body = graphql_json_query, encode = "json")
+  response <- rpdbapi_http_request(
+    url = graphql_url,
+    method = "POST",
+    body = graphql_json_query,
+    encode = "json",
+    content_type_value = "application/json"
+  )
 
-  if (http_status(response)$category != "Success") {
-    warning(paste("It appears the request failed with:", content(response, "text", encoding = "UTF-8")))
-    stop("Request failed.")
+  if (!rpdbapi_http_success(response)) {
+    warning(paste("It appears the request failed with:", rpdbapi_response_text(response)))
+    rpdbapi_abort(
+      "Request failed.",
+      class = "rPDBapi_error_http",
+      function_name = "search_graphql",
+      status = rpdbapi_http_status_code(response),
+      status_message = rpdbapi_http_status_message(response)
+    )
   }
 
-  return(content(response, "parsed"))
+  return(rpdbapi_response_parsed(response))
 }
 
 

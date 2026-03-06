@@ -9,8 +9,15 @@
 #' @importFrom httr http_status
 #' @export
 handle_api_errors <- function(response, url = "") {
-  if (http_status(response)$category != "Success") {
-    stop("HTTP Error: Request to ", url, " failed with status: ",
-         http_status(response)$status, " - ", http_status(response)$message)
+  status <- http_status(response)
+  if (status$category != "Success") {
+    rpdbapi_abort(
+      paste0("HTTP Error: Request to ", url, " failed with status: ", status$status, " - ", status$message),
+      class = "rPDBapi_error_http",
+      function_name = "handle_api_errors",
+      url = url,
+      status = status$status,
+      status_message = status$message
+    )
   }
 }

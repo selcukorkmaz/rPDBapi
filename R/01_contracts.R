@@ -8,6 +8,20 @@ rpdbapi_abort <- function(message, class = "rPDBapi_error", ..., call = NULL) {
   stop(cond)
 }
 
+rpdbapi_rethrow <- function(error, message_prefix = "", class = "rPDBapi_error_request_failed", wrap_typed = FALSE, ..., call = NULL) {
+  if (inherits(error, "rPDBapi_error") && !isTRUE(wrap_typed)) {
+    stop(error)
+  }
+
+  rpdbapi_abort(
+    paste0(message_prefix, conditionMessage(error)),
+    class = class,
+    parent_message = conditionMessage(error),
+    ...,
+    call = call
+  )
+}
+
 rpdbapi_add_class <- function(x, class_name) {
   class(x) <- unique(c(class_name, class(x)))
   x
