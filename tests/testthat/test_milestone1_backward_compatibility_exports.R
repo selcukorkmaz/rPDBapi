@@ -1,7 +1,17 @@
 # Milestone 1: Backward compatibility freeze for exported surface.
 
 namespace_exports <- function() {
-  lines <- readLines(testthat::test_path("..", "..", "NAMESPACE"))
+  candidates <- c(
+    testthat::test_path("..", "..", "NAMESPACE"),
+    testthat::test_path("..", "NAMESPACE"),
+    file.path(getwd(), "NAMESPACE"),
+    system.file("NAMESPACE", package = "rPDBapi")
+  )
+  namespace_path <- candidates[file.exists(candidates)][1]
+  if (is.na(namespace_path) || !nzchar(namespace_path)) {
+    stop("Could not locate NAMESPACE for export checks.", call. = FALSE)
+  }
+  lines <- readLines(namespace_path)
   sub("^export\\((.*)\\)$", "\\1", grep("^export\\(", lines, value = TRUE))
 }
 

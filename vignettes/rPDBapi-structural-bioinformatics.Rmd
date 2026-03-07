@@ -1,12 +1,14 @@
 ---
 title: "Accessing and Analyzing RCSB PDB Data with rPDBapi"
-author: "Selçuk Korkmaz"
+author: "Selcuk Korkmaz, Bilge Eren Yamasan"
 date: "`r Sys.Date()`"
-output:
-  rmarkdown::html_vignette:
+output: 
+  html_document:
+    theme: cerulean
     toc: true
-    toc_depth: 3
-    number_sections: true
+    toc_float:
+      collapsed: true
+
 vignette: >
   %\VignetteIndexEntry{Accessing and Analyzing RCSB PDB Data with rPDBapi}
   %\VignetteEngine{knitr::rmarkdown}
@@ -24,27 +26,10 @@ knitr::opts_chunk$set(
 )
 
 library(rPDBapi)
-
-if (!requireNamespace("rPDBapi", quietly = TRUE) &&
-    requireNamespace("pkgload", quietly = TRUE)) {
-  package_root <- if (file.exists("DESCRIPTION")) {
-    "."
-  } else if (file.exists(file.path("..", "DESCRIPTION"))) {
-    ".."
-  } else {
-    NA_character_
-  }
-  
-  if (!is.na(package_root)) {
-    pkgload::load_all(package_root, export_all = FALSE, quiet = TRUE)
-  }
-}
-
-library(rPDBapi)
 library(dplyr)
 
 live_examples <- identical(tolower(Sys.getenv("RPDBAPI_RUN_LIVE", "false")), "true")
-have_r3dmol <- requireNamespace("r3dmol", quietly = TRUE)
+have_r3dmol <- any(rownames(installed.packages()) == "r3dmol")
 ```
 
 
@@ -893,6 +878,8 @@ species.
 # Workflow 10: Optional Visualization with r3dmol
 
 ```{r r3dmol-view, eval = live_examples && have_r3dmol}
+r3d <- asNamespace("r3dmol")
+
 saved_structure <- get_pdb_file(
   pdb_id = selected_entry,
   filetype = "pdb",
@@ -901,10 +888,10 @@ saved_structure <- get_pdb_file(
   verbosity = FALSE
 )
 
-r3dmol::r3dmol() %>%
-  r3dmol::m_add_model(data = saved_structure$path, format = "pdb") %>%
-  r3dmol::m_set_style(style = r3dmol::m_style_cartoon(color = "spectrum")) %>%
-  r3dmol::m_zoom_to()
+r3d$r3dmol() %>%
+  r3d$m_add_model(data = saved_structure$path, format = "pdb") %>%
+  r3d$m_set_style(style = r3d$m_style_cartoon(color = "spectrum")) %>%
+  r3d$m_zoom_to()
 ```
 
 This optional chunk demonstrates how `rPDBapi` fits into broader R

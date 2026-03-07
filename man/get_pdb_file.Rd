@@ -98,19 +98,21 @@ are included to guide the user in case of issues with file retrieval or processi
   # ltertiary structure of a protein using the
   # PDB entry 1XYZ:
 
-  library(r3dmol)
+  if (any(rownames(installed.packages()) == "r3dmol")) {
+    r3d <- asNamespace("r3dmol")
 
-  # Retrieve and parse a PDB structure
-  pdb_path <- get_pdb_file("1XYZ", filetype = "pdb", save = TRUE)
+    # Retrieve and parse a PDB structure
+    pdb_path <- get_pdb_file("1XYZ", filetype = "pdb", save = TRUE)
 
-  # Visualize the tertiary structure using r3dmol
-  viewer <- r3dmol() \%>\%
-    m_add_model(pdb_path$path, format = "pdb") \%>\%  # Load the PDB file
-    m_set_style(style = m_style_cartoon()) \%>\%  # Cartoon representation
-    m_zoom_to()
+    # Visualize the tertiary structure using r3dmol
+    viewer <- r3d$r3dmol() \%>\%
+      r3d$m_add_model(pdb_path$path, format = "pdb") \%>\%  # Load the PDB file
+      r3d$m_set_style(style = r3d$m_style_cartoon()) \%>\%  # Cartoon representation
+      r3d$m_zoom_to()
 
-  # Display the molecular viewer
-  viewer
+    # Display the molecular viewer
+    viewer
+  }
   # In this example, the protein structure is represented
   # in a cartoon style, which is particularly
   # effective for visualizing the overall fold of the protein,
@@ -131,14 +133,18 @@ are included to guide the user in case of issues with file retrieval or processi
   # on prior knowledge or external analysis
   binding_sites <- c(45, 60, 85)  # Example residue numbers
 
-  viewer <- viewer \%>\%
-    m_set_style(
-      sel = m_sel(resi = binding_sites),
-      style = m_style_sphere(color = "red", radius = 1.5)
-    )
+  if (exists("viewer")) {
+    viewer <- viewer \%>\%
+      r3d$m_set_style(
+        sel = r3d$m_sel(resi = binding_sites),
+        style = r3d$m_style_sphere(color = "red", radius = 1.5)
+      )
+  }
 
   # Display the updated viewer with highlighted binding sites
-  viewer
+  if (exists("viewer")) {
+    viewer
+  }
 
   # In this step, specific residues that are
   # hypothesized to participate in ligand binding are

@@ -69,7 +69,7 @@
 - `548cfd8`
   - Small namespace export adjustment.
 
-## January 2024 feature build-out
+## rPDBapi 0.9.0 (2024-01-17)
 
 ### 2024-01-17 `217eae0`, `316c2c7`, `adfd67d`, `8f09f11`
 
@@ -119,7 +119,7 @@
 
 - Added early query and nested-dictionary traversal helpers.
 
-## Initial package creation
+## rPDBapi 0.1.0 (2023-12-28)
 
 ### 2023-12-28 `b9aafb0` first commit
 
